@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailMitra – Demo & Simulation Controls</title>
+  <meta name="description" content="Simulation control panel for hackathon evaluation and demonstration.">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <a href="/static/index.html" class="brand">
+        <span>🛠️ RailMitra Demo Controls</span>
+        <span class="brand-badge">Evaluation Panel</span>
+      </a>
+      <div class="nav-actions">
+        <a href="/static/index.html" class="btn btn-outline btn-sm">Passenger App</a>
+        <a href="/static/tte.html" class="btn btn-outline btn-sm">TTE Portal</a>
+        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+
+    <!-- Top Card: Reset & Overview -->
+    <div class="card" style="border-top: 4px solid var(--accent);">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Simulated Environment Controller</h2>
+          <p class="text-muted" style="font-size: 0.85rem;">
+            Reset dataset, simulate train movement across stations, and launch multi-persona test sessions.
+          </p>
+        </div>
+        <button type="button" id="resetBtn" class="btn btn-danger btn-sm" onclick="handleReset()">
+          ⚠️ Reset Demo Database
+        </button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        All actions write to an audit log. Reset restores baseline reservation chart with Asha, Meera, Kiran, Ravi, Vikram, and Verma family of 5.
+      </div>
+    </div>
+
+    <!-- Simulation Card: Advance Train -->
+    <div class="card">
+      <h3 class="card-title">🚂 Train Progress & Station Expiry Simulation</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">
+        Train 12951 route: <strong>S1 → S2 → S3 → S4 → S5</strong>.
+        Advancing past an exchange's earlier destination triggers automatic expiry and return-to-berth notifications.
+      </p>
+
+      <div style="background: var(--surface-raised); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div>
+            Current Station: <strong id="currentStationText" style="font-size: 1.25rem; color: var(--primary);">S1</strong>
+          </div>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceToStation('S1')">Set S1</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceToStation('S2')">Advance to S2</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceToStation('S3')">Advance to S3</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceToStation('S4')">Advance to S4</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="advanceToStation('S5')">Advance to S5</button>
+          </div>
+        </div>
+
+        <div id="simRouteTracker"></div>
+      </div>
+
+      <div id="advanceResultBox" style="display: none; background: var(--success-bg); color: var(--success); padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;"></div>
+    </div>
+
+    <!-- Multi-Persona Quick Login Links -->
+    <div class="card">
+      <h3 class="card-title">👥 Multi-Passenger Persona Quick Launch</h3>
+      <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;">
+        Open each persona in a new browser tab or incognito window to simulate peer-to-peer exchanges in real-time.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+        <!-- Asha -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem; background: var(--surface);">
+          <div style="font-weight: 700; font-size: 1rem;">Asha Sharma</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">PNR: PNR1000001 • Coach S2, Berth 14 (Upper)</div>
+          <div style="font-size: 0.8rem; margin: 0.4rem 0;">Route: S1 → S4 • Age: 34</div>
+          <button type="button" class="btn btn-outline btn-sm" style="width: 100%;" onclick="launchPersona('PNR1000001')">
+            Launch Asha Session ↗
+          </button>
+        </div>
+
+        <!-- Kiran -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem; background: var(--surface);">
+          <div style="font-weight: 700; font-size: 1rem;">Kiran Patel (Best Match)</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">PNR: PNR1000003 • Coach S2, Berth 43 (Upper)</div>
+          <div style="font-size: 0.8rem; margin: 0.4rem 0;">Route: S1 → S4 • Age: 33</div>
+          <button type="button" class="btn btn-outline btn-sm" style="width: 100%;" onclick="launchPersona('PNR1000003')">
+            Launch Kiran Session ↗
+          </button>
+        </div>
+
+        <!-- Meera -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem; background: var(--surface);">
+          <div style="font-weight: 700; font-size: 1rem;">Meera Sharma (Protected)</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">PNR: PNR1000002 • Coach S2, Berth 41 (Lower)</div>
+          <div style="font-size: 0.8rem; margin: 0.4rem 0;">Route: S1 → S4 • Age: 62 (Senior Citizen)</div>
+          <button type="button" class="btn btn-outline btn-sm" style="width: 100%;" onclick="launchPersona('PNR1000002')">
+            Launch Meera Session ↗
+          </button>
+        </div>
+
+        <!-- Ravi -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.85rem; background: var(--surface);">
+          <div style="font-weight: 700; font-size: 1rem;">Ravi Verma (Possible Match)</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">PNR: PNR1000004 • Coach S2, Berth 46 (Lower)</div>
+          <div style="font-size: 0.8rem; margin: 0.4rem 0;">Route: S1 → S5 (Diff destination) • Age: 35</div>
+          <button type="button" class="btn btn-outline btn-sm" style="width: 100%;" onclick="launchPersona('PNR1000004')">
+            Launch Ravi Session ↗
+          </button>
+        </div>
+
+        <!-- TTE Examiner -->
+        <div style="border: 2px solid var(--primary); border-radius: var(--radius-md); padding: 0.85rem; background: var(--primary-light);">
+          <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">TTE Portal Access</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Key: tte-demo-key</div>
+          <div style="font-size: 0.8rem; margin: 0.4rem 0;">Approve / Clarify / Effective Seating</div>
+          <a href="/static/tte.html" target="_blank" class="btn btn-primary btn-sm" style="width: 100%;">
+            Launch TTE Dashboard ↗
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="padding: 0;">
+      <div>&copy; 2026 RailMitra – Smart Railway Seat Exchange & Family Seating System</div>
+      <div class="disclaimer-box">
+        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/ui.js"></script>
+
+  <script>
+    let currentTrainStation = 'S1';
+    const trainRoute = ['S1', 'S2', 'S3', 'S4', 'S5'];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTrainStatus();
+    });
+
+    async function loadTrainStatus() {
+      try {
+        const seating = await api.getTrainSeating('12951');
+        currentTrainStation = seating.current_station || 'S1';
+        document.getElementById('currentStationText').textContent = currentTrainStation;
+
+        ui.renderRouteProgress(
+          'simRouteTracker',
+          trainRoute,
+          'S1',
+          'S5',
+          currentTrainStation
+        );
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    async function advanceToStation(station) {
+      try {
+        const res = await api.advanceTrain('T-101', station);
+        ui.showToast(`Train advanced to ${station}! Expired ${res.expired_requests_count} exchanges.`, 'success');
+        
+        const box = document.getElementById('advanceResultBox');
+        box.style.display = 'block';
+        box.innerHTML = `
+          Train is now at <strong>${station}</strong>.<br>
+          Expired exchanges: <strong>${res.expired_requests_count}</strong><br>
+          Notifications dispatched: <strong>${res.notifications_dispatched}</strong>
+        `;
+
+        loadTrainStatus();
+      } catch (err) {
+        ui.showToast(err.message || 'Failed to advance train.', 'error');
+      }
+    }
+
+    async function handleReset() {
+      if (!confirm('Are you sure you want to reset all simulated reservation data to baseline?')) return;
+      const btn = document.getElementById('resetBtn');
+      btn.disabled = true;
+      btn.textContent = 'Resetting...';
+
+      try {
+        const res = await api.resetDemo();
+        ui.showToast(res.message || 'Demo database reset complete.', 'success');
+        loadTrainStatus();
+      } catch (err) {
+        ui.showToast(err.message || 'Reset failed.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⚠️ Reset Demo Database';
+      }
+    }
+
+    async function launchPersona(pnr) {
+      try {
+        // Send OTP to get cleartext code in demo mode
+        const res = await api.sendOTP(pnr);
+        const otp = res.demo_otp;
+        const verifyRes = await api.verifyOTP(pnr, otp);
+        // Open passenger app
+        window.open('/static/index.html', '_blank');
+      } catch (err) {
+        // Just open index.html if direct login fails
+        window.open('/static/index.html', '_blank');
+      }
+    }
+  </script>
+</body>
+</html>

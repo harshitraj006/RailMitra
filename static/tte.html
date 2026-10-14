@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailMitra – Train Ticket Examiner (TTE) Dashboard</title>
+  <meta name="description" content="TTE Portal for reviewing and authorizing passenger seat exchanges on Indian Railways trains.">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+  <!-- Demo Top Bar -->
+  <aside class="demo-banner">
+    <div>
+      🛡️ <strong>TTE INSPECTION PORTAL</strong> • Authorized Examiner Access
+    </div>
+    <div>
+      <a href="/static/index.html" style="color: #fde68a;">← Passenger App</a> • 
+      <a href="/static/demo.html" style="color: #fde68a;">Demo Tools 🛠️</a>
+    </div>
+  </aside>
+
+  <!-- Navigation -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <a href="/static/tte.html" class="brand">
+        <span>📋 RailMitra TTE Portal</span>
+        <span class="brand-badge">Official Examiner</span>
+      </a>
+
+      <div class="nav-actions">
+        <!-- Dark Mode Toggle -->
+        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
+          🌙
+        </button>
+
+        <button type="button" class="btn btn-outline btn-sm" onclick="openAuditModal()">
+          📜 Audit Trail
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" role="main">
+
+    <!-- Key & Authentication Strip -->
+    <div class="card" style="margin-top: 1rem;">
+      <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 260px;">
+          <label for="tteKeyInput" style="font-size: 0.85rem; font-weight: 700;">TTE Key:</label>
+          <input type="password" id="tteKeyInput" class="form-input" style="max-width: 220px;" value="tte-demo-key">
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveTTEKey()">Apply Key</button>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <label for="filterStatus" style="font-size: 0.85rem; font-weight: 600;">Status:</label>
+          <select id="filterStatus" class="form-select" style="width: auto; padding: 0.35rem 0.6rem; font-size: 0.85rem;" onchange="loadTTERequests()">
+            <option value="ALL">All Statuses</option>
+            <option value="ACCEPTED_BY_PASSENGER">Awaiting Approval</option>
+            <option value="TTE_APPROVED">Approved</option>
+            <option value="TTE_REJECTED">Rejected</option>
+            <option value="CLARIFICATION_REQUESTED">Clarification</option>
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadTTERequests()">🔄 Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Summary Strip -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+      <div class="card" style="margin: 0; padding: 0.85rem; text-align: center; border-left: 4px solid var(--accent);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">AWAITING REVIEW</div>
+        <div id="statPendingCount" style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">0</div>
+      </div>
+      <div class="card" style="margin: 0; padding: 0.85rem; text-align: center; border-left: 4px solid var(--success);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">APPROVED</div>
+        <div id="statApprovedCount" style="font-size: 1.5rem; font-weight: 800; color: var(--success);">0</div>
+      </div>
+      <div class="card" style="margin: 0; padding: 0.85rem; text-align: center; border-left: 4px solid var(--warning);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">CLARIFICATION</div>
+        <div id="statClarifyCount" style="font-size: 1.5rem; font-weight: 800; color: var(--warning);">0</div>
+      </div>
+      <div class="card" style="margin: 0; padding: 0.85rem; text-align: center; border-left: 4px solid var(--primary);">
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">CURRENT STATION</div>
+        <div id="statStationVal" style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">S1</div>
+      </div>
+    </div>
+
+    <!-- Main Views Toggle: Requests Queue vs Effective Seating -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+      <button type="button" class="btn btn-primary" id="btnViewQueue" onclick="switchTTEView('queue')">Exchange Requests Queue</button>
+      <button type="button" class="btn btn-outline" id="btnViewSeating" onclick="switchTTEView('seating')">Coach Seating Chart</button>
+    </div>
+
+    <!-- VIEW 1: REQUESTS QUEUE -->
+    <section id="viewQueueArea">
+      <div id="tteRequestsContainer" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+    </section>
+
+    <!-- VIEW 2: COACH SEATING CHART -->
+    <section id="viewSeatingArea" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Live Effective Coach Seating (Train 12951)</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Overlays active TTE-approved exchanges on the official reservation chart.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="coachSelect" class="form-select" style="width: auto;" onchange="loadEffectiveSeating()">
+              <option value="S2">Coach S2</option>
+              <option value="S1">Coach S1</option>
+              <option value="S3">Coach S3</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="seatingGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clarification / Review Note Modal -->
+  <div id="tteReviewModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="card-title" id="tteReviewModalTitle">TTE Review Action</h3>
+        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('tteReviewModal')">&times;</button>
+      </div>
+
+      <div id="tteReviewSummary" style="font-size: 0.85rem; margin-bottom: 1rem; background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-sm);"></div>
+
+      <div class="form-group">
+        <label for="tteNoteInput" class="form-label">Inspector Review Note (Optional for Approval, Required for Clarification):</label>
+        <textarea id="tteNoteInput" class="form-input" rows="3" placeholder="e.g. ID verified with passenger on board..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" class="btn btn-outline" onclick="ui.closeModal('tteReviewModal')">Cancel</button>
+        <button type="button" id="submitReviewBtn" class="btn btn-primary">Confirm Decision</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Trail Modal -->
+  <div id="auditModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="card-title">📜 Immutable Audit Trail</h3>
+        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('auditModal')">&times;</button>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+        Every reservation verification, OTP lock, consent confirmation, and TTE decision is cryptographically logged.
+      </div>
+      <div id="auditLogContent" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- Footer Disclaimer -->
+  <footer class="footer">
+    <div class="container" style="padding: 0;">
+      <div>&copy; 2026 RailMitra – Smart Railway Seat Exchange & Family Seating System</div>
+      <div class="disclaimer-box">
+        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/static/js/qrcode.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/ws.js"></script>
+  <script src="/static/js/ui.js"></script>
+
+  <script>
+    let activeReviewRequestId = null;
+    let activeReviewDecision = null;
+    let allRequests = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedKey = api.getTTEKey();
+      if (savedKey) {
+        document.getElementById('tteKeyInput').value = savedKey;
+      }
+
+      // Initialize TTE WebSocket
+      rmWS.init(true);
+      rmWS.on('request_updated', () => loadTTERequests());
+      rmWS.on('tte_decision', () => loadTTERequests());
+      rmWS.on('exchange_expired', () => loadTTERequests());
+
+      loadTTERequests();
+      loadTrainSummary();
+    });
+
+    function saveTTEKey() {
+      const key = document.getElementById('tteKeyInput').value.trim();
+      api.setTTEKey(key);
+      ui.showToast('TTE key saved.', 'info');
+      loadTTERequests();
+    }
+
+    function switchTTEView(view) {
+      if (view === 'queue') {
+        document.getElementById('viewQueueArea').style.display = 'block';
+        document.getElementById('viewSeatingArea').style.display = 'none';
+        document.getElementById('btnViewQueue').className = 'btn btn-primary';
+        document.getElementById('btnViewSeating').className = 'btn btn-outline';
+        loadTTERequests();
+      } else {
+        document.getElementById('viewQueueArea').style.display = 'none';
+        document.getElementById('viewSeatingArea').style.display = 'block';
+        document.getElementById('btnViewQueue').className = 'btn btn-outline';
+        document.getElementById('btnViewSeating').className = 'btn btn-primary';
+        loadEffectiveSeating();
+      }
+    }
+
+    async function loadTrainSummary() {
+      try {
+        const summary = await api.getTTETrainSummary('T-101');
+        document.getElementById('statStationVal').textContent = summary.current_station || 'S1';
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    async function loadTTERequests() {
+      const container = document.getElementById('tteRequestsContainer');
+      container.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+
+      try {
+        allRequests = await api.getTTERequests();
+        const filter = document.getElementById('filterStatus').value;
+
+        // Update counts
+        document.getElementById('statPendingCount').textContent = 
+          allRequests.filter(r => r.status === 'ACCEPTED_BY_PASSENGER').length;
+        document.getElementById('statApprovedCount').textContent = 
+          allRequests.filter(r => r.status === 'TTE_APPROVED').length;
+        document.getElementById('statClarifyCount').textContent = 
+          allRequests.filter(r => r.status === 'CLARIFICATION_REQUESTED').length;
+
+        const filtered = filter === 'ALL' ? allRequests : allRequests.filter(r => r.status === filter);
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">✅</div>
+              <h4>No Exchange Requests in this View</h4>
+              <p>Requests become visible here once target passenger consent has been verified.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = filtered.map(r => {
+          const bothConsents = r.requester_consent && r.target_consent;
+          const isPending = (r.status === 'ACCEPTED_BY_PASSENGER' || r.status === 'CLARIFICATION_REQUESTED');
+
+          return `
+            <div class="card" style="border-left: 4px solid ${r.status === 'TTE_APPROVED' ? 'var(--success)' : 'var(--primary)'};">
+              <div class="card-header">
+                <div>
+                  <span style="font-weight: 700; font-size: 1.05rem;">Request #${r.request_id}</span>
+                  ${r.group_name ? `<span class="badge badge-neutral" style="margin-left: 0.5rem;">Family: ${r.group_name}</span>` : ''}
+                </div>
+                ${ui.getStatusBadge(r.status)}
+              </div>
+
+              <!-- Original vs Proposed Allocation -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.85rem;">
+                <div style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-sm);">
+                  <div style="color: var(--text-muted); font-weight: 600;">REQUESTER ALLOCATION</div>
+                  <div>Original: <strong>${r.requester_original}</strong></div>
+                  <div>Proposed: <strong style="color: var(--primary);">${r.requester_proposed}</strong></div>
+                  <div style="font-size: 0.75rem; color: var(--success); margin-top: 0.25rem;">
+                    Consent: ${r.requester_consent ? '✅ Confirmed (by request initiation)' : '⏳ Awaiting'}
+                  </div>
+                </div>
+
+                <div style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-sm);">
+                  <div style="color: var(--text-muted); font-weight: 600;">TARGET CO-PASSENGER</div>
+                  <div>Original: <strong>${r.target_original}</strong></div>
+                  <div>Proposed: <strong style="color: var(--primary);">${r.target_proposed}</strong></div>
+                  <div style="font-size: 0.75rem; color: ${r.target_consent ? 'var(--success)' : 'var(--danger)'}; margin-top: 0.25rem;">
+                    Consent: ${r.target_consent ? '✅ Confirmed independently' : '⏳ Awaiting Consent'}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Segment & Expiry -->
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                <span>Active Segment: <strong>${r.start_station} → ${r.expiry_station}</strong></span>
+                <span>Expires at: <strong style="color: var(--danger);">${r.expiry_station}</strong> (both return to original)</span>
+              </div>
+
+              <!-- TTE Decision Action Buttons -->
+              <div style="display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="openAuditModal(${r.request_id})">
+                  Audit Trail
+                </button>
+
+                ${isPending ? `
+                  <button type="button" class="btn btn-outline btn-sm" onclick="promptTTEReview(${r.request_id}, 'CLARIFICATION_REQUESTED')">
+                    Request Clarification
+                  </button>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="promptTTEReview(${r.request_id}, 'TTE_REJECTED')">
+                    Reject
+                  </button>
+                  <button type="button" class="btn btn-success btn-sm" ${!bothConsents ? 'disabled title="Both passenger consents are strictly required before TTE approval"' : ''} onclick="promptTTEReview(${r.request_id}, 'TTE_APPROVED')">
+                    Approve Exchange ✓
+                  </button>
+                ` : `
+                  ${r.status === 'TTE_APPROVED' ? `
+                    <a href="/static/slip.html?request_id=${r.request_id}" target="_blank" class="btn btn-primary btn-sm">
+                      Inspect Slip & QR 🎫
+                    </a>
+                  ` : ''}
+                `}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Failed to load TTE requests: ${err.message}. Please check TTE Key.</div>`;
+      }
+    }
+
+    function promptTTEReview(requestId, decision) {
+      activeReviewRequestId = requestId;
+      activeReviewDecision = decision;
+
+      const titles = {
+        'TTE_APPROVED': 'Approve Seat Exchange',
+        'TTE_REJECTED': 'Reject Seat Exchange',
+        'CLARIFICATION_REQUESTED': 'Request Clarification from Passengers'
+      };
+
+      document.getElementById('tteReviewModalTitle').textContent = titles[decision] || 'Review Action';
+      document.getElementById('tteReviewSummary').innerHTML = `
+        <strong>Request #${requestId}</strong> • Action: <strong>${decision}</strong>
+      `;
+      document.getElementById('tteNoteInput').value = '';
+
+      document.getElementById('submitReviewBtn').onclick = submitTTEReview;
+      ui.openModal('tteReviewModal');
+    }
+
+    async function submitTTEReview() {
+      const note = document.getElementById('tteNoteInput').value.trim();
+      const btn = document.getElementById('submitReviewBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        await api.reviewTTERequest(activeReviewRequestId, activeReviewDecision, note);
+        ui.closeModal('tteReviewModal');
+        ui.showToast(`Decision recorded: ${activeReviewDecision}`, 'success');
+        loadTTERequests();
+      } catch (err) {
+        ui.showToast(err.message || 'Failed to submit review.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Decision';
+      }
+    }
+
+    async function loadEffectiveSeating() {
+      const container = document.getElementById('seatingGridContainer');
+      const coach = document.getElementById('coachSelect').value;
+      container.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+
+      try {
+        const data = await api.getTrainSeating('12951');
+        const seating = data.seating || [];
+        const filtered = seating.filter(s => (s.effective_coach === coach || s.original_coach === coach));
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<div class="empty-state">No passenger records for coach ${coach}.</div>`;
+          return;
+        }
+
+        container.innerHTML = filtered.map(s => `
+          <div style="background: ${s.is_swapped ? 'var(--success-bg)' : 'var(--surface-raised)'}; border: 1px solid ${s.is_swapped ? 'var(--success-border)' : 'var(--border)'}; padding: 0.75rem; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+              <strong style="font-size: 1rem;">Berth ${s.effective_berth_no}</strong>
+              <span class="badge ${s.is_swapped ? 'badge-best' : 'badge-neutral'}">
+                ${s.is_swapped ? 'Swapped' : 'Original'}
+              </span>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 600;">${s.name}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${s.effective_berth_type}</div>
+            ${s.is_swapped ? `
+              <div style="font-size: 0.75rem; color: var(--success); margin-top: 0.35rem; font-weight: 600;">
+                Exchanged with: ${s.swap_with} (Orig: B${s.original_berth_no})
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Failed to load seating chart: ${err.message}</div>`;
+      }
+    }
+
+    async function openAuditModal(requestId = null) {
+      const list = document.getElementById('auditLogContent');
+      list.innerHTML = '<div class="skeleton"></div>';
+      ui.openModal('auditModal');
+
+      try {
+        const logs = await api.getTTEAudit(requestId);
+        if (logs.length === 0) {
+          list.innerHTML = '<div class="empty-state">No audit entries found.</div>';
+          return;
+        }
+
+        list.innerHTML = logs.map(l => `
+          <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; font-size: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; font-weight: 700;">
+              <span>${l.action} (${l.entity_type} #${l.entity_id})</span>
+              <span style="color: var(--text-muted);">${new Date(l.timestamp).toLocaleString()}</span>
+            </div>
+            <div style="color: var(--text-muted);">Actor: <strong>${l.actor}</strong></div>
+            ${l.details ? `
+              <pre style="background: var(--surface-raised); padding: 0.35rem; border-radius: var(--radius-sm); font-size: 0.75rem; margin-top: 0.25rem; overflow-x: auto;">${JSON.stringify(l.details, null, 2)}</pre>
+            ` : ''}
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = `<div style="color: var(--danger);">Failed to load audit logs: ${err.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -3,59 +3,936 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RailMitra – Smart Railway Seat Exchange</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background: #0f172a;
-      color: #f8fafc;
-      text-align: center;
-    }
-    .card {
-      max-width: 600px;
-      margin: 4rem auto;
-      background: #1e293b;
-      padding: 2.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-      border: 1px solid #334155;
-    }
-    h1 { color: #38bdf8; margin-bottom: 0.5rem; }
-    p { color: #94a3b8; line-height: 1.6; }
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      background: #0284c7;
-      color: #fff;
-      margin-bottom: 1.5rem;
-    }
-    .footer {
-      margin-top: 3rem;
-      font-size: 0.75rem;
-      color: #64748b;
-      border-top: 1px solid #334155;
-      padding-top: 1rem;
-    }
-    a { color: #38bdf8; text-decoration: none; font-weight: 500; }
-    a:hover { text-decoration: underline; }
-  </style>
+  <title>RailMitra – Smart Railway Seat Exchange & Family Seating</title>
+  <meta name="description" content="Consent-based smart railway seat exchange system for Indian Railways passengers and families.">
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-  <div class="card">
-    <span class="badge">Part 1 Initialized</span>
-    <h1>RailMitra</h1>
-    <p>Smart Railway Seat Exchange & Family Seating System</p>
-    <p>Backend foundation initialized with FastAPI 0.115+, SQLAlchemy 2.0 Async ORM, and simulated reservation dataset.</p>
-    <p><a href="/docs" id="api-docs-link">Explore Swagger API Documentation &rarr;</a></p>
-    <p><a href="/health" id="health-check-link">View Health Endpoint &rarr;</a></p>
-    <div class="footer">
-      Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+
+  <!-- Top Demo Banner -->
+  <aside class="demo-banner" id="demoBanner" role="region" aria-label="Demo Announcement">
+    <div>
+      <span data-i18n="demo_mode_banner">DEMO MODE: Simulated reservation data.</span>
+      <span id="demoOtpBanner" style="display:none; margin-left: 0.5rem;">
+        OTP: <span class="demo-otp-tag" id="demoOtpVal"></span>
+      </span>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+      <a href="/static/demo.html" target="_blank" style="color: #fde68a;">Demo Tools 🛠️</a>
+      <a href="/static/tte.html" target="_blank" style="color: #fde68a;">TTE Portal 📋</a>
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <a href="/static/index.html" class="brand" aria-label="RailMitra Home">
+        <span>🚆 RailMitra</span>
+        <span class="brand-badge" data-i18n="prototype_badge">Prototype</span>
+      </a>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <select id="langSelect" class="form-select" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; width: auto;" aria-label="Select Language">
+          <option value="en">English</option>
+          <option value="hi">हिंदी (Hindi)</option>
+          <option value="kn">ಕನ್ನಡ (Kannada)</option>
+        </select>
+
+        <!-- Dark Mode Toggle -->
+        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
+          🌙
+        </button>
+
+        <!-- Notification Bell (visible when logged in) -->
+        <button type="button" id="notifBell" class="btn btn-outline btn-icon" style="display: none; position: relative;" onclick="openNotificationsModal()" aria-label="Notifications">
+          🔔
+          <span id="notifBadge" class="badge badge-declined" style="position: absolute; top: -4px; right: -4px; padding: 2px 5px; font-size: 0.65rem; display: none;">0</span>
+        </button>
+
+        <!-- Sign Out Button -->
+        <button type="button" id="logoutBtn" class="btn btn-outline btn-sm" style="display: none;" onclick="handleLogout()" data-i18n="btn_logout">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="container" role="main">
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: AUTHENTICATION / LOGIN VIEW                         -->
+    <!-- ============================================================== -->
+    <section id="authView" class="card" style="max-width: 520px; margin: 2rem auto;">
+      <div class="card-header">
+        <div>
+          <h1 class="card-title" id="authHeading" data-i18n="login_title">Passenger Login</h1>
+          <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;" data-i18n="login_subtitle">
+            Enter your simulated journey details to request or manage seat exchanges
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Fill Buttons for Demo Judges -->
+      <div style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; border: 1px dashed var(--border);">
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
+          QUICK-FILL PRESETS (DEMO):
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000001', '12951')">Asha (S2-14)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000003', '12951')">Kiran (S2-43)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000004', '12951')">Ravi (S2-46)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000005', '12951')">Vikram (S2-50)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000010', '12951')">Verma Family</button>
+        </div>
+      </div>
+
+      <!-- Step 1: PNR & Journey Validation Form -->
+      <form id="journeyForm" onsubmit="handleValidateJourney(event)">
+        <div class="form-group">
+          <label for="pnrInput" class="form-label" data-i18n="pnr_label">10-Digit PNR</label>
+          <input type="text" id="pnrInput" class="form-input" required placeholder="PNR1000001" autocomplete="off">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="trainInput" class="form-label" data-i18n="train_label">Train Number</label>
+            <input type="text" id="trainInput" class="form-input" placeholder="12951" value="12951">
+          </div>
+          <div class="form-group">
+            <label for="dateInput" class="form-label" data-i18n="date_label">Journey Date</label>
+            <input type="date" id="dateInput" class="form-input">
+          </div>
+        </div>
+        <div id="authError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;"></div>
+        <button type="submit" id="validateBtn" class="btn btn-primary" style="width: 100%;" data-i18n="btn_validate">
+          Validate Journey & Request OTP
+        </button>
+      </form>
+
+      <!-- Step 2: OTP Verification Form (Hidden until validated) -->
+      <form id="otpForm" style="display: none;" onsubmit="handleVerifyOTP(event)">
+        <div style="background: var(--primary-light); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+          <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem;" id="journeySummaryText"></div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="otpContactText"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="otpInput" class="form-label" data-i18n="otp_label">Verification Code (OTP)</label>
+          <input type="text" id="otpInput" class="form-input" required maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" style="font-size: 1.25rem; letter-spacing: 0.25em; text-align: center;">
+        </div>
+
+        <div id="lockoutTimerBox" style="display: none; background: var(--danger-bg); color: var(--danger); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; font-size: 0.85rem;">
+          <span data-i18n="lockout_warning">Account locked due to 3 failed attempts. Try again in:</span>
+          <strong id="lockoutSeconds">600</strong> <span data-i18n="seconds">seconds</span>
+        </div>
+
+        <div id="otpError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;"></div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline" style="flex: 1;" onclick="resetAuthForm()" data-i18n="btn_cancel">Back</button>
+          <button type="submit" id="verifyOtpBtn" class="btn btn-primary" style="flex: 2;" data-i18n="btn_verify">Verify & Enter</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: PASSENGER DASHBOARD (Visible when logged in)       -->
+    <!-- ============================================================== -->
+    <section id="dashboardView" style="display: none;">
+      
+      <!-- Passenger & Journey Header Card -->
+      <div class="card" style="border-top: 4px solid var(--primary);">
+        <div class="card-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <h2 id="userNameDisplay" style="font-size: 1.3rem; font-weight: 800;">Asha Sharma</h2>
+              <span id="quotaBadge" class="badge badge-neutral">0 of 3 requests used</span>
+            </div>
+            <div id="userPnrDisplay" style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;"></div>
+          </div>
+          <div style="text-align: right;">
+            <div id="trainNameDisplay" style="font-weight: 700; color: var(--primary);">12951 - Demo Express</div>
+            <div id="userBerthDisplay" style="font-size: 0.9rem; font-weight: 600;">Coach S2, Berth 14 (UPPER)</div>
+          </div>
+        </div>
+
+        <!-- Route Visualization (S1 -> S5) -->
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+            <span>Route Segment: <strong id="segmentText" style="color: var(--text-main);">S1 → S4</strong></span>
+            <span>Train Status: <strong id="trainPosText" style="color: var(--accent);">At S1</strong></span>
+          </div>
+          <div id="routeProgressContainer"></div>
+        </div>
+
+        <!-- Co-passengers in family booking -->
+        <div id="groupMembersBox" style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;" data-i18n="group_members_title">
+            Co-Travelers in your Booking:
+          </div>
+          <div id="groupMembersList" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div style="display: flex; gap: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; padding-bottom: 0.25rem;">
+        <button type="button" class="btn btn-primary tab-btn" id="tabFindMatches" onclick="switchTab('matches')" data-i18n="tab_find_matches">Find Seat Exchange</button>
+        <button type="button" class="btn btn-outline tab-btn" id="tabMyRequests" onclick="switchTab('my-requests')" data-i18n="tab_my_requests">My Requests</button>
+        <button type="button" class="btn btn-outline tab-btn" id="tabIncoming" onclick="switchTab('incoming')">
+          <span data-i18n="tab_incoming">Incoming Requests</span>
+          <span id="incomingBadge" class="badge badge-declined" style="display:none; padding: 2px 6px; font-size: 0.65rem;">0</span>
+        </button>
+        <button type="button" class="btn btn-outline tab-btn" id="tabGroup" onclick="switchTab('group')" data-i18n="tab_group_request" style="display:none;">Family Group</button>
+      </div>
+
+      <!-- TAB A: MATCH CANDIDATES -->
+      <div id="tabContentMatches">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <div>
+            <h3 style="font-size: 1.1rem; font-weight: 700;" data-i18n="match_title">Eligible Exchange Candidates</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="match_subtitle">Ranked co-passengers with overlapping journey segments</p>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadMatches()">Refresh</button>
+        </div>
+        <div id="matchesContainer" class="candidate-grid"></div>
+      </div>
+
+      <!-- TAB B: MY REQUESTS (SENT) -->
+      <div id="tabContentMyRequests" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700;" data-i18n="tab_my_requests">My Requests</h3>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadMyRequests()">Refresh</button>
+        </div>
+        <div id="myRequestsContainer"></div>
+      </div>
+
+      <!-- TAB C: INCOMING REQUESTS -->
+      <div id="tabContentIncoming" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700;" data-i18n="tab_incoming">Incoming Requests</h3>
+          <button type="button" class="btn btn-outline btn-sm" onclick="loadIncomingRequests()">Refresh</button>
+        </div>
+        <div id="incomingContainer"></div>
+      </div>
+
+      <!-- TAB D: FAMILY GROUP REQUESTS -->
+      <div id="tabContentGroup" style="display: none;">
+        <div class="card">
+          <h3 class="card-title" data-i18n="group_title">Family Group Seating</h3>
+          <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1rem;" data-i18n="group_subtitle">
+            Coordinate multi-member seat exchanges collectively with family members
+          </p>
+          <div id="groupStatusArea"></div>
+          <div id="groupBuilderArea"></div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Confirm Request Modal -->
+  <div id="confirmRequestModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="confirmModalTitle" class="card-title" data-i18n="confirm_modal_title">Confirm Exchange Request</h3>
+        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('confirmRequestModal')">&times;</button>
+      </div>
+      <div id="confirmModalBody" style="font-size: 0.9rem; margin-bottom: 1rem;"></div>
+      <div class="disclaimer-box" style="margin-bottom: 1rem;">
+        ⚠️ <span data-i18n="expiry_notice">Reminders support compliance but cannot physically enforce returning to original berths.</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <button type="button" class="btn btn-outline" onclick="ui.closeModal('confirmRequestModal')" data-i18n="btn_cancel">Cancel</button>
+        <button type="button" id="sendRequestConfirmBtn" class="btn btn-primary" data-i18n="btn_confirm">Send Request</button>
+      </div>
     </div>
   </div>
+
+  <!-- Notifications Modal -->
+  <div id="notificationsModal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="card-title">🔔 Notifications</h3>
+        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('notificationsModal')">&times;</button>
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+      </div>
+      <div id="notificationsList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 350px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- Footer Disclaimer (Mandatory on Every Page) -->
+  <footer class="footer" role="contentinfo">
+    <div class="container" style="padding: 0;">
+      <div>&copy; 2026 RailMitra – Smart Railway Seat Exchange & Family Seating System</div>
+      <div class="disclaimer-box" data-i18n="footer_disclaimer">
+        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/static/js/qrcode.js"></script>
+  <script src="/static/js/i18n.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/ws.js"></script>
+  <script src="/static/js/ui.js"></script>
+
+  <script>
+    // State Variables
+    let currentPassenger = null;
+    let validatedPnr = null;
+    let trainRouteStations = ["S1", "S2", "S3", "S4", "S5"];
+    let trainCurrentPosition = "S1";
+    let pendingTargetCandidate = null;
+    let lockoutInterval = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Set today's date default
+      document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+
+      // Language Switcher listener
+      const langSelect = document.getElementById('langSelect');
+      langSelect.value = i18n.getLanguage();
+      langSelect.addEventListener('change', (e) => i18n.setLanguage(e.target.value));
+
+      // Check if session token already exists in sessionStorage
+      const token = api.getSessionToken();
+      if (token) {
+        try {
+          const profile = await api.getMe();
+          onLoginSuccess(profile);
+        } catch (e) {
+          api.clearSession();
+          showAuthView();
+        }
+      } else {
+        showAuthView();
+      }
+
+      // Initialize WebSocket connection
+      rmWS.init(false);
+      rmWS.on('request_received', (data) => {
+        ui.showToast(`New seat exchange request received!`, 'info');
+        loadIncomingRequests();
+        loadNotifications();
+      });
+      rmWS.on('request_updated', (data) => {
+        ui.showToast(`Exchange request updated: ${data.status || ''}`, 'info');
+        loadMyRequests();
+        loadIncomingRequests();
+        loadQuota();
+      });
+      rmWS.on('tte_decision', (data) => {
+        ui.showToast(`TTE decision: ${data.decision}`, data.decision === 'TTE_APPROVED' ? 'success' : 'error');
+        loadMyRequests();
+        loadNotifications();
+      });
+      rmWS.on('exchange_expired', (data) => {
+        ui.showToast(`Seat exchange expired. Please return to original berth.`, 'error', 6000);
+        loadMyRequests();
+        loadTrainPosition();
+        loadNotifications();
+      });
+      rmWS.on('poll_sync', () => {
+        if (currentPassenger) {
+          loadMyRequests();
+          loadIncomingRequests();
+          loadQuota();
+          loadNotifications();
+        }
+      });
+    });
+
+    function quickFill(pnr, train) {
+      document.getElementById('pnrInput').value = pnr;
+      document.getElementById('trainInput').value = train;
+    }
+
+    function showAuthView() {
+      document.getElementById('authView').style.display = 'block';
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('notifBell').style.display = 'none';
+    }
+
+    // Step 1: Validate Journey
+    async function handleValidateJourney(event) {
+      event.preventDefault();
+      const pnr = document.getElementById('pnrInput').value.trim();
+      const train = document.getElementById('trainInput').value.trim();
+      const date = document.getElementById('dateInput').value;
+      const errBox = document.getElementById('authError');
+      errBox.style.display = 'none';
+
+      const btn = document.getElementById('validateBtn');
+      btn.disabled = true;
+      btn.textContent = 'Validating...';
+
+      try {
+        const valRes = await api.validateJourney(pnr, train, date);
+        validatedPnr = pnr;
+        trainRouteStations = valRes.route || trainRouteStations;
+
+        // Send OTP
+        const otpRes = await api.sendOTP(pnr);
+        
+        // Show demo banner with OTP
+        if (otpRes.demo_otp) {
+          document.getElementById('demoOtpVal').textContent = otpRes.demo_otp;
+          document.getElementById('demoOtpBanner').style.display = 'inline-block';
+        }
+
+        // Switch to OTP form
+        document.getElementById('journeyForm').style.display = 'none';
+        document.getElementById('otpForm').style.display = 'block';
+        document.getElementById('journeySummaryText').textContent = 
+          `${valRes.passenger_name} • Coach ${valRes.coach}, Berth ${valRes.berth_no} (${valRes.berth_type})`;
+        document.getElementById('otpContactText').textContent = 
+          `OTP dispatched to simulated mobile ${valRes.phone_masked}`;
+
+        ui.showToast('Simulated OTP sent successfully!', 'info');
+      } catch (err) {
+        errBox.textContent = err.message || 'Validation failed. Please verify PNR and train details.';
+        errBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = i18n.t('btn_validate');
+      }
+    }
+
+    // Step 2: Verify OTP
+    async function handleVerifyOTP(event) {
+      event.preventDefault();
+      const code = document.getElementById('otpInput').value.trim();
+      const errBox = document.getElementById('otpError');
+      errBox.style.display = 'none';
+
+      const btn = document.getElementById('verifyOtpBtn');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        const res = await api.verifyOTP(validatedPnr, code);
+        ui.showToast('Login verified successfully!', 'success');
+        onLoginSuccess(res.passenger);
+      } catch (err) {
+        if (err.status === 423) {
+          // Account locked out
+          startLockoutCountdown(err.data ? err.data.locked_seconds_remaining || 600 : 600);
+        } else {
+          errBox.textContent = err.message || 'Incorrect verification code. Please check OTP.';
+          errBox.style.display = 'block';
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = i18n.t('btn_verify');
+      }
+    }
+
+    function startLockoutCountdown(totalSeconds) {
+      const box = document.getElementById('lockoutTimerBox');
+      const val = document.getElementById('lockoutSeconds');
+      const verifyBtn = document.getElementById('verifyOtpBtn');
+      box.style.display = 'block';
+      verifyBtn.disabled = true;
+
+      let remaining = totalSeconds;
+      val.textContent = remaining;
+      clearInterval(lockoutInterval);
+      lockoutInterval = setInterval(() => {
+        remaining--;
+        val.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(lockoutInterval);
+          box.style.display = 'none';
+          verifyBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    function resetAuthForm() {
+      document.getElementById('journeyForm').style.display = 'block';
+      document.getElementById('otpForm').style.display = 'none';
+      document.getElementById('authError').style.display = 'none';
+      document.getElementById('otpError').style.display = 'none';
+    }
+
+    function onLoginSuccess(passenger) {
+      currentPassenger = passenger;
+      document.getElementById('authView').style.display = 'none';
+      document.getElementById('dashboardView').style.display = 'block';
+      document.getElementById('logoutBtn').style.display = 'inline-flex';
+      document.getElementById('notifBell').style.display = 'inline-flex';
+
+      // Reconnect WebSocket with new token
+      rmWS.connect();
+
+      // Populate Passenger Info
+      document.getElementById('userNameDisplay').textContent = passenger.name;
+      document.getElementById('userPnrDisplay').textContent = `PNR: ${passenger.pnr}`;
+      document.getElementById('userBerthDisplay').textContent = `Coach ${passenger.coach}, Berth ${passenger.berth_no} (${passenger.berth_type})`;
+      document.getElementById('segmentText').textContent = `${passenger.boarding_station} → ${passenger.destination_station}`;
+
+      if (passenger.group_id) {
+        document.getElementById('tabGroup').style.display = 'inline-flex';
+      } else {
+        document.getElementById('tabGroup').style.display = 'none';
+      }
+
+      loadTrainPosition();
+      loadQuota();
+      loadMatches();
+      loadIncomingBadge();
+      loadNotifications();
+    }
+
+    async function handleLogout() {
+      await api.logout();
+      currentPassenger = null;
+      document.getElementById('demoOtpBanner').style.display = 'none';
+      resetAuthForm();
+      showAuthView();
+      ui.showToast('Logged out successfully.', 'info');
+    }
+
+    async function loadTrainPosition() {
+      try {
+        const trainInfo = await api.getTrainSeating('12951');
+        trainCurrentPosition = trainInfo.current_station || 'S1';
+        trainRouteStations = trainInfo.route || trainRouteStations;
+        document.getElementById('trainPosText').textContent = `At ${trainCurrentPosition}`;
+
+        ui.renderRouteProgress(
+          'routeProgressContainer',
+          trainRouteStations,
+          currentPassenger.boarding_station,
+          currentPassenger.destination_station,
+          trainCurrentPosition
+        );
+      } catch (e) {
+        console.warn('Failed to load train position:', e);
+      }
+    }
+
+    async function loadQuota() {
+      try {
+        const quota = await api.getRemainingQuota();
+        const badge = document.getElementById('quotaBadge');
+        badge.textContent = `${quota.used} of ${quota.allowed} requests used`;
+        if (quota.used >= quota.allowed) {
+          badge.className = 'badge badge-declined';
+        } else {
+          badge.className = 'badge badge-neutral';
+        }
+      } catch (e) {
+        console.warn('Failed to load quota:', e);
+      }
+    }
+
+    // Switch between dashboard tabs
+    function switchTab(tabName) {
+      const tabs = ['matches', 'my-requests', 'incoming', 'group'];
+      tabs.forEach(t => {
+        const content = document.getElementById(`tabContent${t === 'matches' ? 'Matches' : t === 'my-requests' ? 'MyRequests' : t === 'incoming' ? 'Incoming' : 'Group'}`);
+        const btn = document.getElementById(`tab${t === 'matches' ? 'FindMatches' : t === 'my-requests' ? 'MyRequests' : t === 'incoming' ? 'Incoming' : 'Group'}`);
+        if (t === tabName) {
+          if (content) content.style.display = 'block';
+          if (btn) {
+            btn.className = 'btn btn-primary tab-btn';
+          }
+        } else {
+          if (content) content.style.display = 'none';
+          if (btn) {
+            btn.className = 'btn btn-outline tab-btn';
+          }
+        }
+      });
+
+      if (tabName === 'matches') loadMatches();
+      if (tabName === 'my-requests') loadMyRequests();
+      if (tabName === 'incoming') loadIncomingRequests();
+      if (tabName === 'group') loadGroupTab();
+    }
+
+    // Load Matches
+    async function loadMatches() {
+      const container = document.getElementById('matchesContainer');
+      container.innerHTML = '<div class="skeleton" style="height: 100px;"></div><div class="skeleton" style="height: 100px;"></div>';
+
+      try {
+        const res = await api.getMatches();
+        const candidates = res.candidates || [];
+        if (candidates.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <div class="empty-icon">🔍</div>
+              <h4>No Eligible Matches Found</h4>
+              <p>There are currently no co-passengers on this train with overlapping segments matching your criteria.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = candidates.map(c => `
+          <div class="candidate-card ${c.category === 'BEST' ? 'best' : 'possible'}">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div>
+                  <h4 style="font-weight: 700; font-size: 1.05rem;">Coach ${c.coach}, Berth ${c.berth_no}</h4>
+                  <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">${c.berth_type}</div>
+                </div>
+                <span class="badge ${c.category === 'BEST' ? 'badge-best' : 'badge-possible'}">
+                  ${c.category === 'BEST' ? 'Best Match' : 'Possible Match'}
+                </span>
+              </div>
+              <div style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                <strong>Passenger:</strong> ${c.first_name}<br>
+                <strong>Segment:</strong> ${c.segment.start} → ${c.segment.end}
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); background: var(--surface-raised); padding: 0.4rem; border-radius: var(--radius-sm);">
+                💡 <em>${c.why}</em>
+              </p>
+            </div>
+            <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.75rem; color: var(--text-light);">Score: ${c.proximity_score}</span>
+              <button type="button" class="btn btn-primary btn-sm" onclick="promptRequestExchange(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+                Request Exchange
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger); grid-column: 1 / -1;">Failed to load matches: ${err.message}</div>`;
+      }
+    }
+
+    function promptRequestExchange(candidate) {
+      pendingTargetCandidate = candidate;
+      const modalBody = document.getElementById('confirmModalBody');
+      modalBody.innerHTML = `
+        <div style="background: var(--surface-raised); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 0.75rem;">
+          <div><strong>Requested Berth:</strong> Coach ${candidate.coach}, Berth ${candidate.berth_no} (${candidate.berth_type})</div>
+          <div><strong>Passenger:</strong> ${candidate.first_name}</div>
+          <div><strong>Active Segment:</strong> ${candidate.segment.start} → ${candidate.segment.end}</div>
+          <div style="color: var(--primary); font-weight: 600; margin-top: 0.5rem;">
+            ⏳ Exchange expires at ${candidate.segment.end}. Both passengers then return to their original berths.
+          </div>
+        </div>
+      `;
+
+      document.getElementById('sendRequestConfirmBtn').onclick = submitExchangeRequest;
+      ui.openModal('confirmRequestModal');
+    }
+
+    async function submitExchangeRequest() {
+      if (!pendingTargetCandidate) return;
+      const btn = document.getElementById('sendRequestConfirmBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await api.createRequest(pendingTargetCandidate.candidate_id);
+        ui.closeModal('confirmRequestModal');
+        ui.showToast('Exchange request sent to co-passenger!', 'success');
+        loadQuota();
+        switchTab('my-requests');
+      } catch (err) {
+        if (err.status === 429) {
+          ui.showToast('Journey limit reached (max 3 requests).', 'error');
+        } else if (err.status === 409) {
+          ui.showToast(err.message || 'Duplicate request to this target.', 'error');
+        } else {
+          ui.showToast(err.message || 'Failed to submit exchange request.', 'error');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = i18n.t('btn_confirm');
+      }
+    }
+
+    // Load My Requests
+    async function loadMyRequests() {
+      const container = document.getElementById('myRequestsContainer');
+      container.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+
+      try {
+        const requests = await api.getMyRequests();
+        if (requests.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📫</div>
+              <h4>No Requests Sent</h4>
+              <p>You haven't initiated any seat exchange requests for this journey.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = requests.map(r => `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <span style="font-weight: 700; font-size: 1rem;">Exchange with ${r.target_name.split(' ')[0]}</span>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Request ID: #${r.id}</div>
+              </div>
+              ${ui.getStatusBadge(r.status)}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 0.75rem;">
+              <div style="background: var(--surface-raised); padding: 0.65rem; border-radius: var(--radius-sm);">
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Your Berth</div>
+                <strong>Coach ${r.requester_coach}, Berth ${r.requester_berth_no}</strong> (${r.requester_berth_type})
+              </div>
+              <div style="background: var(--surface-raised); padding: 0.65rem; border-radius: var(--radius-sm);">
+                <div style="color: var(--text-muted); font-size: 0.75rem;">Target Berth</div>
+                <strong>Coach ${r.target_coach}, Berth ${r.target_berth_no}</strong> (${r.target_berth_type})
+              </div>
+            </div>
+
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Segment: ${r.start_station} → ${r.expiry_station} (Expires at ${r.expiry_station})
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              ${r.status === 'PENDING_CONSENT' ? `
+                <button type="button" class="btn btn-danger btn-sm" onclick="cancelMyRequest(${r.id})">Cancel Request</button>
+              ` : ''}
+              ${r.status === 'TTE_APPROVED' ? `
+                <a href="/static/slip.html?request_id=${r.id}" target="_blank" class="btn btn-success btn-sm">
+                  View Slip & QR 🎫
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Failed to load requests: ${err.message}</div>`;
+      }
+    }
+
+    async function cancelMyRequest(id) {
+      if (!confirm('Are you sure you want to cancel this request? Note: It still counts towards your 3-request quota.')) return;
+      try {
+        await api.cancelRequest(id);
+        ui.showToast('Request cancelled.', 'info');
+        loadMyRequests();
+        loadQuota();
+      } catch (err) {
+        ui.showToast(err.message || 'Failed to cancel request.', 'error');
+      }
+    }
+
+    // Load Incoming Requests
+    async function loadIncomingRequests() {
+      const container = document.getElementById('incomingContainer');
+      container.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+
+      try {
+        const incoming = await api.getIncomingRequests();
+        updateIncomingBadge(incoming.filter(r => r.status === 'PENDING_CONSENT').length);
+
+        if (incoming.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📨</div>
+              <h4>No Incoming Requests</h4>
+              <p data-i18n="incoming_empty">No pending requests from other passengers at this time.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = incoming.map(r => `
+          <div class="card" style="border-left: 4px solid var(--primary);">
+            <div class="card-header">
+              <div>
+                <h4 style="font-weight: 700; font-size: 1rem;">Exchange Request from ${r.requester_name.split(' ')[0]}</h4>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Request #${r.id}</div>
+              </div>
+              ${ui.getStatusBadge(r.status)}
+            </div>
+
+            <div style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <p>They are offering: <strong>Coach ${r.requester_coach}, Berth ${r.requester_berth_no} (${r.requester_berth_type})</strong></p>
+              <p>In exchange for your: <strong>Coach ${r.target_coach}, Berth ${r.target_berth_no} (${r.target_berth_type})</strong></p>
+              <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">
+                Segment: ${r.start_station} → ${r.expiry_station}
+              </p>
+            </div>
+
+            ${r.status === 'PENDING_CONSENT' ? `
+              <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="respondToRequest(${r.id}, 'DECLINED')">Decline</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="respondToRequest(${r.id}, 'ACCEPTED')">Accept Exchange</button>
+              </div>
+            ` : `
+              <div style="display: flex; justify-content: flex-end;">
+                ${r.status === 'TTE_APPROVED' ? `
+                  <a href="/static/slip.html?request_id=${r.id}" target="_blank" class="btn btn-success btn-sm">
+                    View Slip & QR 🎫
+                  </a>
+                ` : ''}
+              </div>
+            `}
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Failed to load incoming requests: ${err.message}</div>`;
+      }
+    }
+
+    async function loadIncomingBadge() {
+      try {
+        const incoming = await api.getIncomingRequests();
+        const pending = incoming.filter(r => r.status === 'PENDING_CONSENT').length;
+        updateIncomingBadge(pending);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function updateIncomingBadge(count) {
+      const b = document.getElementById('incomingBadge');
+      if (count > 0) {
+        b.textContent = count;
+        b.style.display = 'inline-block';
+      } else {
+        b.style.display = 'none';
+      }
+    }
+
+    async function respondToRequest(requestId, decision) {
+      try {
+        await api.respondToRequest(requestId, decision);
+        ui.showToast(`Request ${decision.toLowerCase()} successfully.`, 'success');
+        loadIncomingRequests();
+      } catch (err) {
+        ui.showToast(err.message || 'Failed to submit response.', 'error');
+      }
+    }
+
+    // Load Notifications
+    async function loadNotifications() {
+      try {
+        const notifs = await api.getNotifications();
+        const unread = notifs.filter(n => !n.read).length;
+        const badge = document.getElementById('notifBadge');
+        if (unread > 0) {
+          badge.textContent = unread;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    async function openNotificationsModal() {
+      const list = document.getElementById('notificationsList');
+      list.innerHTML = '<div class="skeleton"></div>';
+      ui.openModal('notificationsModal');
+
+      try {
+        const notifs = await api.getNotifications();
+        if (notifs.length === 0) {
+          list.innerHTML = '<div class="empty-state" style="padding: 1.5rem;">No notifications.</div>';
+          return;
+        }
+
+        list.innerHTML = notifs.map(n => `
+          <div style="background: ${n.read ? 'var(--surface)' : 'var(--surface-raised)'}; border: 1px solid var(--border); padding: 0.65rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">
+              <span>${n.kind}</span>
+              <span>${new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div>${n.message}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = `<div style="color: var(--danger);">Failed to load notifications.</div>`;
+      }
+    }
+
+    async function markAllNotificationsAsRead() {
+      try {
+        await api.markAllNotificationsRead();
+        document.getElementById('notifBadge').style.display = 'none';
+        openNotificationsModal();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    // Group Tab Logic
+    async function loadGroupTab() {
+      const statusArea = document.getElementById('groupStatusArea');
+      const builderArea = document.getElementById('groupBuilderArea');
+      statusArea.innerHTML = '<div class="skeleton"></div>';
+
+      try {
+        // Fetch family group members
+        const res = await api.validateJourney(currentPassenger.pnr, '12951');
+        const members = res.group_members || [];
+
+        statusArea.innerHTML = `
+          <div style="background: var(--surface-raised); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+            <h4 style="font-weight: 700; margin-bottom: 0.4rem;">Booking Group: ${res.group_name || 'Family Booking'}</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.85rem;">
+              ${members.map(m => `
+                <div style="border: 1px solid var(--border); padding: 0.45rem; border-radius: var(--radius-sm); background: var(--surface);">
+                  <strong>${m.name}</strong> (${m.age}y)<br>
+                  Coach ${m.coach}, Berth ${m.berth_no} (${m.berth_type})
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        builderArea.innerHTML = `
+          <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+            <h4 style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem;">Group Coordination Feature</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+              Submit linked exchange requests for family members. Quota is validated per member (3 requests each).
+            </p>
+            <button type="button" class="btn btn-primary" onclick="simulateGroupRequest()" data-i18n="btn_submit_group">
+              Submit Linked Requests for Group
+            </button>
+          </div>
+        `;
+      } catch (e) {
+        statusArea.innerHTML = `<div style="color: var(--danger);">Failed to load group details.</div>`;
+      }
+    }
+
+    async function simulateGroupRequest() {
+      try {
+        // Auto-match for group
+        const matches = await api.getMatches();
+        if (!matches.candidates || matches.candidates.length === 0) {
+          ui.showToast('No eligible candidates found for group request.', 'warning');
+          return;
+        }
+
+        const candidateId = matches.candidates[0].candidate_id;
+        const res = await api.createGroupRequest([
+          { member_id: currentPassenger.id, target_id: candidateId }
+        ]);
+
+        ui.showToast(`Group request submitted! Status: ${res.status}`, 'success');
+        document.getElementById('groupBuilderArea').innerHTML = `
+          <div style="background: var(--success-bg); color: var(--success); padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.9rem;">
+            ✅ Group Request #${res.group_request_id} created. Progress: ${res.confirmed_swaps} of ${res.total_swaps} confirmed.
+          </div>
+        `;
+      } catch (err) {
+        ui.showToast(err.message || 'Group request error', 'error');
+      }
+    }
+  </script>
 </body>
 </html>

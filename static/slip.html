@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailMitra – Digital Seat Exchange Slip</title>
+  <meta name="description" content="Official digital seat exchange verification record for RailMitra passengers and TTE.">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <style>
+    .slip-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background: var(--surface);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .slip-header {
+      text-align: center;
+      border-bottom: 2px dashed var(--border);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+    .slip-badge {
+      display: inline-block;
+      background: var(--success);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-full);
+      margin-top: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+    .slip-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .slip-field-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .slip-field-val {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: var(--surface-raised);
+      border-radius: var(--radius-md);
+      border: 1px dashed var(--border);
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav for digital screen -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <a href="/static/index.html" class="brand">
+        <span>🚆 RailMitra</span>
+        <span class="brand-badge">Digital Slip</span>
+      </a>
+      <div class="nav-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="window.print()">
+          🖨️ Print Slip
+        </button>
+        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container print-page" role="main">
+    <div id="slipWrapper" class="slip-container">
+      <div class="slip-header">
+        <div style="font-size: 1.4rem; font-weight: 900; color: var(--primary);">
+          INDIAN RAILWAYS • RAILMITRA
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+          CONSENT-BASED SEAT EXCHANGE RECORD
+        </div>
+        <div class="slip-badge" id="slipApprovalStatus">
+          TTE AUTHORIZED & APPROVED
+        </div>
+      </div>
+
+      <div id="slipLoading" style="text-align: center; padding: 2rem;">
+        <div class="skeleton" style="height: 40px; margin-bottom: 1rem;"></div>
+        <div class="skeleton" style="height: 120px;"></div>
+      </div>
+
+      <div id="slipContent" style="display: none;">
+        <!-- Slip Metadata -->
+        <div class="slip-grid">
+          <div>
+            <div class="slip-field-label">Record Slip ID</div>
+            <div class="slip-field-val" id="slipIdVal">RM-SLIP-001</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Date of Journey</div>
+            <div class="slip-field-val" id="slipDateVal">2026-10-14</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Train</div>
+            <div class="slip-field-val" id="slipTrainVal">12951 - Demo Express</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Passenger</div>
+            <div class="slip-field-val" id="slipPassengerVal">Asha Sharma</div>
+          </div>
+        </div>
+
+        <!-- Berth Allocation Highlight Box -->
+        <div style="background: var(--primary-light); border-left: 4px solid var(--primary); padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700;">APPROVED EXCHANGE BERTH</div>
+              <div style="font-size: 1.25rem; font-weight: 900; color: var(--primary);" id="slipExchangedBerthVal">
+                Coach S2, Berth 43 (UPPER)
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">ORIGINAL BERTH</div>
+              <div style="font-size: 0.95rem; font-weight: 700;" id="slipOriginalBerthVal">
+                Coach S2, Berth 14 (UPPER)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segment & Expiry -->
+        <div class="slip-grid">
+          <div>
+            <div class="slip-field-label">Effective Journey Segment</div>
+            <div class="slip-field-val" id="slipSegmentVal">S1 → S4</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Exchange Expiry Station</div>
+            <div class="slip-field-val" style="color: var(--danger);" id="slipExpiryVal">S4</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Inspecting TTE</div>
+            <div class="slip-field-val" id="slipTteVal">tte_demo (Authorized)</div>
+          </div>
+          <div>
+            <div class="slip-field-label">Compliance Rule</div>
+            <div class="slip-field-val" style="font-size: 0.8rem; font-weight: 600;">
+              Return to original berth at S4
+            </div>
+          </div>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-box">
+          <div id="qrCodeTarget" style="margin-bottom: 0.5rem;"></div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">
+            Scan to independently verify cryptographic record via RailMitra verification API
+          </div>
+          <div style="font-family: monospace; font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;" id="slipTokenVal"></div>
+          <a id="publicVerifyLink" href="#" target="_blank" style="font-size: 0.75rem; color: var(--primary); margin-top: 0.4rem; text-decoration: underline;">
+            Open Public Verification Page ↗
+          </a>
+        </div>
+
+        <!-- Mandatory Record Label & Disclaimers -->
+        <div style="text-align: center; font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; border-top: 1px dashed var(--border); padding-top: 0.75rem;">
+          <p><strong>RailMitra record – not an official Indian Railways document.</strong></p>
+          <p style="margin-top: 0.25rem;">
+            Notice: Reminders support compliance but cannot physically enforce returning to original berths.
+          </p>
+        </div>
+      </div>
+
+      <div id="slipError" style="display: none; color: var(--danger); text-align: center; padding: 2rem;"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="padding: 0;">
+      <div>&copy; 2026 RailMitra – Smart Railway Seat Exchange System</div>
+      <div class="disclaimer-box">
+        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/qrcode.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/ui.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestId = urlParams.get('request_id');
+      const token = urlParams.get('token');
+
+      if (requestId) {
+        loadSlipByRequestId(requestId);
+      } else if (token) {
+        loadSlipByVerificationToken(token);
+      } else {
+        showError('Missing request_id or token in URL.');
+      }
+    });
+
+    async function loadSlipByRequestId(requestId) {
+      try {
+        const slip = await api.getDigitalSlip(requestId);
+        renderSlip(slip);
+      } catch (err) {
+        showError(err.message || 'Failed to load exchange slip. Exchange may not be approved yet.');
+      }
+    }
+
+    async function loadSlipByVerificationToken(token) {
+      try {
+        const verifyData = await api.verifySlipToken(token);
+        renderVerifiedSlip(verifyData);
+      } catch (err) {
+        showError(err.message || 'Invalid or unverified exchange token.');
+      }
+    }
+
+    function renderSlip(slip) {
+      document.getElementById('slipLoading').style.display = 'none';
+      document.getElementById('slipContent').style.display = 'block';
+
+      document.getElementById('slipIdVal').textContent = slip.slip_id;
+      document.getElementById('slipDateVal').textContent = slip.journey_date;
+      document.getElementById('slipTrainVal').textContent = `${slip.train_number} - ${slip.train_name}`;
+      document.getElementById('slipPassengerVal').textContent = `${slip.passenger_name} (PNR: ${slip.pnr})`;
+      document.getElementById('slipExchangedBerthVal').textContent = slip.exchanged_berth;
+      document.getElementById('slipOriginalBerthVal').textContent = slip.original_berth;
+      document.getElementById('slipSegmentVal').textContent = slip.effective_segment;
+      document.getElementById('slipExpiryVal').textContent = slip.expiry_station;
+      document.getElementById('slipTteVal').textContent = slip.tte_name || 'TTE Authorized';
+
+      // Parse QR data
+      try {
+        const qrJson = JSON.parse(slip.qr_data);
+        const verifyUrl = `${window.location.origin}/api/verify/${qrJson.token}`;
+        document.getElementById('slipTokenVal').textContent = `Token: ${qrJson.token}`;
+        document.getElementById('publicVerifyLink').href = verifyUrl;
+
+        // Render QR Code SVG
+        new QRCode(document.getElementById('qrCodeTarget'), {
+          text: verifyUrl,
+          width: 140,
+          height: 140
+        });
+      } catch (e) {
+        console.warn('QR parse failed:', e);
+      }
+    }
+
+    function renderVerifiedSlip(data) {
+      document.getElementById('slipLoading').style.display = 'none';
+      document.getElementById('slipContent').style.display = 'block';
+
+      document.getElementById('slipIdVal').textContent = `VERIFIED-${data.exchange_id}`;
+      document.getElementById('slipDateVal').textContent = data.journey_date;
+      document.getElementById('slipTrainVal').textContent = `${data.train_number} - ${data.train_name}`;
+      document.getElementById('slipPassengerVal').textContent = `Passenger: ${data.passenger_initial}*** (Verified)`;
+      document.getElementById('slipExchangedBerthVal').textContent = data.approved_berth;
+      document.getElementById('slipOriginalBerthVal').textContent = data.original_berth;
+      document.getElementById('slipSegmentVal').textContent = data.effective_segment;
+      document.getElementById('slipExpiryVal').textContent = data.expiry_station;
+      document.getElementById('slipTteVal').textContent = data.verified_by_tte;
+      document.getElementById('slipTokenVal').textContent = `Token: ${data.verification_token}`;
+
+      const verifyUrl = `${window.location.origin}/api/verify/${data.verification_token}`;
+      document.getElementById('publicVerifyLink').href = verifyUrl;
+
+      new QRCode(document.getElementById('qrCodeTarget'), {
+        text: verifyUrl,
+        width: 140,
+        height: 140
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('slipLoading').style.display = 'none';
+      const err = document.getElementById('slipError');
+      err.textContent = msg;
+      err.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
