@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RailMitra – Smart Railway Seat Exchange</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #0f172a;
+      color: #f8fafc;
+      text-align: center;
+    }
+    .card {
+      max-width: 600px;
+      margin: 4rem auto;
+      background: #1e293b;
+      padding: 2.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      border: 1px solid #334155;
+    }
+    h1 { color: #38bdf8; margin-bottom: 0.5rem; }
+    p { color: #94a3b8; line-height: 1.6; }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #0284c7;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+    .footer {
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      border-top: 1px solid #334155;
+      padding-top: 1rem;
+    }
+    a { color: #38bdf8; text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">Part 1 Initialized</span>
+    <h1>RailMitra</h1>
+    <p>Smart Railway Seat Exchange & Family Seating System</p>
+    <p>Backend foundation initialized with FastAPI 0.115+, SQLAlchemy 2.0 Async ORM, and simulated reservation dataset.</p>
+    <p><a href="/docs" id="api-docs-link">Explore Swagger API Documentation &rarr;</a></p>
+    <p><a href="/health" id="health-check-link">View Health Endpoint &rarr;</a></p>
+    <div class="footer">
+      Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+    </div>
+  </div>
+</body>
+</html>
