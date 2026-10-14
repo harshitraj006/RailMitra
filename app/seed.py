@@ -284,11 +284,11 @@ async def seed_database(db: AsyncSession, force: bool = False) -> dict:
         ("PNR1000024", "Sachin Tendulkar", "S2", 5, BerthType.UPPER.value, "S1", "S4", 51, False),
         ("PNR1000025", "VVS Laxman", "S2", 7, BerthType.SIDE_LOWER.value, "S2", "S4", 49, False),
         ("PNR1000026", "Harbhajan Singh", "S2", 8, BerthType.SIDE_UPPER.value, "S2", "S5", 44, False),
-        ("PNR1000027", "Zaheer Khan", "S2", 38, BerthType.MIDDLE.value, "S1", "S4", 45, False),
-        ("PNR1000028", "Yuvraj Singh", "S2", 39, BerthType.UPPER.value, "S1", "S4", 43, False),
-        ("PNR1000029", "MS Dhoni", "S2", 42, BerthType.MIDDLE.value, "S1", "S4", 43, False),
-        ("PNR1000030", "Suresh Raina", "S2", 47, BerthType.MIDDLE.value, "S1", "S5", 37, False),
-        ("PNR1000031", "Rohit Sharma", "S2", 48, BerthType.UPPER.value, "S1", "S5", 37, False),
+        ("PNR1000027", "Zaheer Khan", "S2", 61, BerthType.MIDDLE.value, "S1", "S4", 45, False),
+        ("PNR1000028", "Yuvraj Singh", "S2", 62, BerthType.UPPER.value, "S1", "S4", 43, False),
+        ("PNR1000029", "MS Dhoni", "S2", 63, BerthType.MIDDLE.value, "S1", "S4", 43, False),
+        ("PNR1000030", "Suresh Raina", "S2", 65, BerthType.MIDDLE.value, "S1", "S5", 37, False),
+        ("PNR1000031", "Rohit Sharma", "S2", 66, BerthType.UPPER.value, "S1", "S5", 37, False),
 
         # Coach S3 passengers
         ("PNR1000032", "Jasprit Bumrah", "S3", 11, BerthType.LOWER.value, "S1", "S5", 30, False),

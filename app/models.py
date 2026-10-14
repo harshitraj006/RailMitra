@@ -23,6 +23,15 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """Ensure datetime has timezone.utc, converting naive datetimes from SQLite."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 class BerthType(str, Enum):
     LOWER = "LOWER"
     MIDDLE = "MIDDLE"

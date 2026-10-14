@@ -75,6 +75,13 @@ app.add_exception_handler(Exception, generic_exception_handler)
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Include Core Engine API Routers
+from app.routers import auth, journey, matching, requests
+app.include_router(journey.router)
+app.include_router(auth.router)
+app.include_router(matching.router)
+app.include_router(requests.router)
+
 
 @app.get("/", include_in_schema=False)
 async def serve_index():

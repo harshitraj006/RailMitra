@@ -32,8 +32,23 @@ class HealthResponse(BaseModel):
 # ============================================================================
 
 class JourneyValidateRequest(BaseModel):
-    """Request payload for validating a passenger PNR."""
-    pnr: str = Field(..., description="10-digit simulated passenger name record", min_length=5, max_length=16)
+    """Request payload for validating a passenger PNR against the simulated dataset."""
+    pnr: str = Field(..., description="Simulated 10-digit PNR", min_length=5, max_length=16)
+    train_number: Optional[str] = Field(None, description="Optional train number (e.g. 12951)")
+    date: Optional[str] = Field(None, description="Optional journey date (YYYY-MM-DD)")
+
+
+class GroupMemberSummary(BaseModel):
+    """Summary of fellow passengers in the same booking/group."""
+    passenger_id: int
+    name: str
+    coach: str
+    berth_no: int
+    berth_type: str
+    age: int
+    needs_lower_berth: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JourneyValidationResponse(BaseModel):
@@ -52,9 +67,16 @@ class JourneyValidationResponse(BaseModel):
     berth_type: str
     boarding_station: str
     destination_station: str
+    route: List[str]
     group_name: Optional[str] = None
+    group_members: List[GroupMemberSummary] = []
     age: int
     needs_lower_berth: bool
+    disclaimer: str = (
+        "Prototype using a simulated reservation dataset. "
+        "Not the official Indian Railways reservation chart or database. "
+        "Official use would require authorization from Indian Railways."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,14 +91,18 @@ class OTPSendResponse(BaseModel):
     success: bool = True
     message: str
     pnr: str
-    demo_code: Optional[str] = Field(None, description="Clear-text OTP displayed when DEMO_MODE=True")
+    masked_phone: Optional[str] = None
+    masked_email: Optional[str] = None
+    demo_otp: Optional[str] = Field(None, description="Simulated clear-text OTP shown when DEMO_MODE=True")
+    demo_code: Optional[str] = Field(None, description="Alias for demo_otp")
     expires_in_seconds: int = 300
 
 
 class OTPVerifyRequest(BaseModel):
     """Payload to verify OTP and obtain a session token."""
     pnr: str = Field(..., min_length=5, max_length=16)
-    otp: str = Field(..., min_length=6, max_length=6)
+    code: Optional[str] = Field(None, description="6-digit verification code")
+    otp: Optional[str] = Field(None, description="Alias for code")
 
 
 class PassengerProfileResponse(BaseModel):
@@ -109,21 +135,24 @@ class OTPVerifyResponse(BaseModel):
 # Matching Engine Schemas
 # ============================================================================
 
+class JourneySegment(BaseModel):
+    """Segment between later boarding and earlier destination."""
+    start: str
+    end: str
+
+
 class MatchCandidate(BaseModel):
     """A co-passenger candidate evaluated for seat exchange."""
-    passenger_id: int
+    candidate_id: int
     first_name: str
     coach: str
     berth_no: int
     berth_type: str
-    boarding_station: str
-    destination_station: str
-    category: MatchCategory
-    overlap_segment: str
-    start_station: str
-    expiry_station: str
-    why: str
+    category: str  # BEST or POSSIBLE
+    segment: JourneySegment
     proximity_score: int
+    reason: str
+    why: str
     distance_to_requester: int
     destination_gap: int
 
@@ -132,12 +161,15 @@ class MatchCandidate(BaseModel):
 
 class MatchListResponse(BaseModel):
     """List of ranked candidate berths available for exchange."""
-    requester_berth: str
     requester_coach: str
-    requester_segment: str
+    requester_berth_no: int
+    requester_berth_type: str
+    requester_segment: JourneySegment
+    need: str = "sit_together"
+    total_candidates: int
     best_matches: List[MatchCandidate]
     possible_matches: List[MatchCandidate]
-    total_candidates: int
+    candidates: List[MatchCandidate]
 
 
 # ============================================================================
@@ -146,10 +178,9 @@ class MatchListResponse(BaseModel):
 
 class CreateExchangeRequest(BaseModel):
     """Payload to initiate a peer-to-peer exchange."""
-    target_passenger_id: int = Field(..., description="ID of co-passenger to swap with")
-    category: MatchCategory
-    start_station: str
-    expiry_station: str
+    target_id: Optional[int] = Field(None, description="Candidate ID to swap with")
+    target_passenger_id: Optional[int] = Field(None, description="Alias for target_id")
+    need: Optional[str] = Field("sit_together", description="Exchange goal/reason")
 
 
 class ExchangeRequestDetailResponse(BaseModel):
@@ -194,6 +225,8 @@ class RemainingRequestsResponse(BaseModel):
     allowed: int = 3
     used: int
     remaining: int
+    max: int = 3
+
 
 
 # ============================================================================

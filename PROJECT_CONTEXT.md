@@ -122,7 +122,25 @@ HTTP status codes used: 400 (Bad Request), 403 (Forbidden), 404 (Not Found), 409
   - Health check endpoint `GET /health` and static files mounted.
   - Automated tests in `tests/test_seed.py` passing (9/9 tests passed).
   - Swagger UI verified in browser at `/docs`.
-- **Part 2:** PENDING (Core Engine APIs: Journey validation, OTP auth, matching engine pure logic, exchange requests creation)
+- **Part 2:** COMPLETED (Core Engine APIs)
+  - **Endpoints Built:**
+    - `POST /api/journey/validate`: Validates simulated journey, train number, and date; returns journey itinerary, coach, berth, route array, and family group members.
+    - `POST /api/otp/send`: Generates salted SHA-256 hashed 6-digit OTP with 5-minute expiry; invalidates previous codes; displays simulated SMS/email in console and returns `demo_otp` when `DEMO_MODE=true`.
+    - `POST /api/otp/verify`: Enforces maximum 3 attempts followed by a 10-minute lockout (HTTP 423 with remaining seconds); on success creates session and returns bearer token.
+    - `GET /api/me`: Returns authenticated passenger profile via `X-Session-Token` header.
+    - `POST /api/logout`: Revokes active session token.
+    - `GET /api/match`: Pure matching engine evaluating candidates by overlapping route segments, classifying BEST vs POSSIBLE, ranking by coach, berth distance, and gap, with sub-500ms response time and strict privacy (never exposes PNR/phone/email).
+    - `POST /api/requests`: Initiates peer-to-peer exchange request; re-runs matching server-side; validates journey limits and blocks duplicate targets; sets status to `PENDING_CONSENT`.
+    - `GET /api/requests/mine`: Lists sent exchange requests with status and journey segments.
+    - `GET /api/requests/remaining`: Returns journey quota (`{pnr, used, remaining, max: 3}`).
+  - **Design Decisions & Architecture:**
+    - *Audit Logging:* Implemented `app/services/audit.py` recording immutable timestamped `AuditLog` rows for all lifecycle transitions (OTP dispatch, failure, lockout, session creation, logout, exchange creation).
+    - *Decoupled Matching Engine:* `app/services/matching.py` implemented as pure logic functions independent of ORM/database, accompanied by a thin DB adapter.
+    - *Vulnerable Passenger Protection:* Strict enforcement of Business Rule R4 prohibiting swapping passengers aged 60+ or requiring lower berths into upper, middle, or side-upper berths.
+    - *Session Security:* Token isolation ensures Passenger A cannot act on behalf of Passenger B.
+    - *TTE Dependency:* Added `require_tte` header dependency validating `X-TTE-Key`.
+    - *Test Coverage:* 27/27 automated unit and integration tests passing (`tests/test_seed.py`, `tests/test_matching_unit.py`, `tests/test_core.py`).
 - **Part 3:** PENDING (Consent, expiry, groups, TTE dashboard, audit, realtime WebSockets)
 - **Part 4:** PENDING (Frontend UI, QR slip, i18n, dark mode, browser verification)
+
 
