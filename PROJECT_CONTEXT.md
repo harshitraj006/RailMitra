@@ -140,7 +140,18 @@ HTTP status codes used: 400 (Bad Request), 403 (Forbidden), 404 (Not Found), 409
     - *Session Security:* Token isolation ensures Passenger A cannot act on behalf of Passenger B.
     - *TTE Dependency:* Added `require_tte` header dependency validating `X-TTE-Key`.
     - *Test Coverage:* 27/27 automated unit and integration tests passing (`tests/test_seed.py`, `tests/test_matching_unit.py`, `tests/test_core.py`).
-- **Part 3:** PENDING (Consent, expiry, groups, TTE dashboard, audit, realtime WebSockets)
+- **Part 3:** COMPLETED (Consent, Expiry, Groups, TTE Dashboard, Audit, Digital Slip, Realtime WebSockets)
+  - **Endpoints & Services Built:**
+    - `services/state.py`: Strict allowed-transitions state machine table raising HTTP 409 `INVALID_STATE_TRANSITION` on illegal attempts.
+    - `routers/consent.py`: `GET /api/requests/incoming`, `POST /api/requests/{id}/respond` (`ACCEPTED` / `DECLINED`, target only with 403 `WRONG_PASSENGER`, stores Confirmation with `device_session_id`), `POST /api/requests/{id}/cancel` (requester only while `PENDING_CONSENT`).
+    - `services/expiry.py` & `routers/simulation.py`: `POST /api/demo/advance_train` station-by-station advancement expiring active exchanges past earlier destination and pending exchanges past start stations; `GET /api/train/{number}/seating` returning live effective seating overlaying active approved swaps; `POST /api/demo/reset`.
+    - `services/notify.py` & `routers/notifications.py`: In-app notification store + simulated console SMS/email; `GET /api/notifications`, `POST /api/notifications/{id}/read`, `POST /api/notifications/read-all`.
+    - `services/groups.py` & `routers/groups.py`: `POST /api/group-requests` validating member limits individually, linking child requests (`group_request_id`), computing live group status (`PENDING`, `PARTIAL`, `FULLY_CONFIRMED`, `FAILED`), and reporting missing items without auto-finalizing; `GET /api/group-requests/{id}`.
+    - `routers/tte.py`: `GET /api/tte/requests` (visible only after target consent), `POST /api/tte/requests/{id}/review` (`APPROVE`, `REJECT`, `CLARIFY`, blocked with 409 if target consent is missing), `GET /api/tte/audit` with request filtering, `GET /api/tte/train/{id}/summary`.
+    - `routers/slip.py`: `GET /api/requests/{id}/slip` generating digital exchange slip with tamper-evident token and QR data (approved requests only); public read-only `GET /api/verify/{token}` leaking no PNR or contact info and displaying prototype disclaimer.
+    - `ws/manager.py` & `routers/websocket.py`: Connection manager broadcasting realtime events (`request_received`, `request_updated`, `group_updated`, `notification`, `exchange_expired`, `tte_decision`) over `/ws`.
+  - **Test Coverage:**
+    - 38/38 automated tests passing across 7 test suites (`tests/test_seed.py`, `tests/test_matching_unit.py`, `tests/test_core.py`, `tests/test_flow.py`, `tests/test_groups.py`, `tests/test_tte.py`, `tests/test_ws.py`).
 - **Part 4:** PENDING (Frontend UI, QR slip, i18n, dark mode, browser verification)
 
 

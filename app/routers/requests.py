@@ -19,6 +19,8 @@ from app.schemas import (
 from app.services import audit
 from app.services import limits as limits_service
 from app.services import matching as matching_service
+from app.services import notify
+from app.ws.manager import manager
 
 router = APIRouter(prefix="/api/requests", tags=["Exchange Requests"])
 
@@ -142,6 +144,20 @@ async def create_exchange_request(
             "proximity_score": candidate.proximity_score,
         },
     )
+
+    # 5. Notify target passenger & broadcast WS event
+    target_passenger = await db.scalar(select(Passenger).where(Passenger.id == target_id))
+    if target_passenger:
+        await notify.notify_request_received(
+            db, target_passenger, current_passenger.name.split()[0],
+            current_passenger.coach, current_passenger.berth_no, current_passenger.berth_type,
+        )
+        await manager.broadcast_event(
+            "request_received",
+            {"request_id": exchange_req.id, "requester": current_passenger.name.split()[0]},
+            passenger_ids=[target_id],
+        )
+
     await db.commit()
 
     # Re-query with eager relationships

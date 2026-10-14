@@ -75,12 +75,32 @@ app.add_exception_handler(Exception, generic_exception_handler)
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Include Core Engine API Routers
-from app.routers import auth, journey, matching, requests
+# Include API Routers
+from app.routers import (
+    auth,
+    consent,
+    groups,
+    journey,
+    matching,
+    notifications,
+    requests,
+    simulation,
+    slip,
+    tte,
+    websocket,
+)
+
 app.include_router(journey.router)
 app.include_router(auth.router)
 app.include_router(matching.router)
 app.include_router(requests.router)
+app.include_router(consent.router)
+app.include_router(groups.router)
+app.include_router(tte.router)
+app.include_router(notifications.router)
+app.include_router(slip.router)
+app.include_router(simulation.router)
+app.include_router(websocket.router)
 
 
 @app.get("/", include_in_schema=False)
@@ -113,6 +133,8 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 @app.post("/api/demo/reset", response_model=DemoResetResponse, tags=["Demo"])
 async def demo_reset(db: AsyncSession = Depends(get_db)):
     """Reset simulated dataset back to the baseline state with worked examples."""
+    from app.services.expiry import reset_train_positions
+    reset_train_positions()
     stats = await reset_database(db)
     return DemoResetResponse(
         message=stats.get("message", "Database reset complete."),

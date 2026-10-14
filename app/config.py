@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 3
     OTP_LOCK_MINUTES: int = 10
     REQUEST_LIMIT: int = 3
+    SECRET_KEY: str = "railmitra-super-secret-salt-2026"
     DATABASE_URL: str = "sqlite+aiosqlite:///./railmitra.db"
 
     model_config = SettingsConfigDict(
