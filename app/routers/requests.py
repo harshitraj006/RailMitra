@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.config import settings
 from app.database import get_db
@@ -164,8 +164,8 @@ async def create_exchange_request(
     stmt = (
         select(ExchangeRequest)
         .options(
-            selectinload(ExchangeRequest.requester),
-            selectinload(ExchangeRequest.target),
+            joinedload(ExchangeRequest.requester),
+            joinedload(ExchangeRequest.target),
             selectinload(ExchangeRequest.confirmations),
         )
         .where(ExchangeRequest.id == exchange_req.id)
@@ -184,8 +184,8 @@ async def list_my_requests(
     stmt = (
         select(ExchangeRequest)
         .options(
-            selectinload(ExchangeRequest.requester),
-            selectinload(ExchangeRequest.target),
+            joinedload(ExchangeRequest.requester),
+            joinedload(ExchangeRequest.target),
             selectinload(ExchangeRequest.confirmations),
         )
         .where(ExchangeRequest.requester_id == current_passenger.id)

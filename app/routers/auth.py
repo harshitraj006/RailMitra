@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.config import settings
 from app.database import get_db
@@ -40,8 +40,8 @@ async def get_current_passenger(
     stmt = (
         select(Session)
         .options(
-            selectinload(Session.passenger).selectinload(Passenger.group),
-            selectinload(Session.passenger).selectinload(Passenger.train),
+            joinedload(Session.passenger).joinedload(Passenger.group),
+            joinedload(Session.passenger).joinedload(Passenger.train),
         )
         .where(Session.token == x_session_token.strip())
     )

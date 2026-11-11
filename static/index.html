@@ -302,9 +302,17 @@
       // Check if session token already exists in sessionStorage
       const token = api.getSessionToken();
       if (token) {
+        // Instant UI hydration from cache while fetching live profile
+        const cached = sessionStorage.getItem('rm_passenger_cache');
+        if (cached) {
+          try {
+            onLoginSuccess(JSON.parse(cached), true);
+          } catch (e) {}
+        }
         try {
           const profile = await api.getMe();
-          onLoginSuccess(profile);
+          sessionStorage.setItem('rm_passenger_cache', JSON.stringify(profile));
+          onLoginSuccess(profile, false);
         } catch (e) {
           api.clearSession();
           showAuthView();
@@ -461,7 +469,7 @@
       document.getElementById('otpError').style.display = 'none';
     }
 
-    function onLoginSuccess(passenger) {
+    function onLoginSuccess(passenger, isCached = false) {
       currentPassenger = passenger;
       document.getElementById('authView').style.display = 'none';
       document.getElementById('dashboardView').style.display = 'block';
@@ -469,7 +477,9 @@
       document.getElementById('notifBell').style.display = 'inline-flex';
 
       // Reconnect WebSocket with new token
-      rmWS.connect();
+      if (!isCached) {
+        rmWS.connect();
+      }
 
       // Populate Passenger Info
       document.getElementById('userNameDisplay').textContent = passenger.name;
@@ -483,11 +493,14 @@
         document.getElementById('tabGroup').style.display = 'none';
       }
 
-      loadTrainPosition();
-      loadQuota();
-      loadMatches();
-      loadIncomingBadge();
-      loadNotifications();
+      // Parallelize all initial dashboard requests
+      Promise.allSettled([
+        loadTrainPosition(),
+        loadQuota(),
+        loadMatches(),
+        loadIncomingBadge(),
+        loadNotifications()
+      ]);
     }
 
     async function handleLogout() {

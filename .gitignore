@@ -29,3 +29,19 @@ htmlcov/
 
 # Logs
 *.log
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Environment variables
+.env
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# OS files
+.DS_Store

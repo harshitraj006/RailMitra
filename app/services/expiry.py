@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import ExchangeRequest, Passenger, RequestStatus, Train, utc_now
 from app.services import audit
@@ -165,8 +165,8 @@ async def get_effective_seating(
             ExchangeRequest.status == RequestStatus.TTE_APPROVED.value,
         )
         .options(
-            selectinload(ExchangeRequest.requester),
-            selectinload(ExchangeRequest.target),
+            joinedload(ExchangeRequest.requester),
+            joinedload(ExchangeRequest.target),
         )
     )
     active_exchanges = (await db.scalars(active_stmt)).all()

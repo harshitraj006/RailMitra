@@ -25,12 +25,18 @@ engine: AsyncEngine = create_async_engine(
 )
 
 
-# Enable SQLite foreign key enforcement
+# Enable SQLite performance and integrity optimizations
 if "sqlite" in settings.DATABASE_URL:
     @event.listens_for(engine.sync_engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA cache_size=-64000")  # 64MB memory page cache
+        cursor.execute("PRAGMA temp_store=MEMORY")
+        cursor.execute("PRAGMA mmap_size=268435456")  # 256MB memory mapped I/O
+        cursor.execute("PRAGMA busy_timeout=5000")
         cursor.close()
 
 

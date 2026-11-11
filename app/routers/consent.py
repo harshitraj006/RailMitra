@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.database import get_db
 from app.errors import (
@@ -34,8 +34,8 @@ async def list_incoming_requests(
     stmt = (
         select(ExchangeRequest)
         .options(
-            selectinload(ExchangeRequest.requester),
-            selectinload(ExchangeRequest.target),
+            joinedload(ExchangeRequest.requester),
+            joinedload(ExchangeRequest.target),
             selectinload(ExchangeRequest.confirmations),
         )
         .where(ExchangeRequest.target_id == current_passenger.id)

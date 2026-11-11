@@ -57,6 +57,22 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+import time
+from fastapi.middleware.gzip import GZipMiddleware
+
+
+class CachedStaticFiles(StaticFiles):
+    """StaticFiles subclass that attaches client-side caching headers."""
+    def file_response(self, *args, **kwargs):
+        response = super().file_response(*args, **kwargs)
+        # Cache static files for 24 hours while allowing revalidation
+        response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
+        return response
+
+
+# Compression Middleware (Gzip > 500 bytes)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -66,14 +82,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    """Measure server-side processing time and expose via X-Process-Time header."""
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = f"{process_time * 1000:.2f}ms"
+    return response
+
+
 # Global Exception Handlers returning standardized { "detail": ..., "code": ... }
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files with caching
+app.mount("/static", CachedStaticFiles(directory="static"), name="static")
 
 # Include API Routers
 from app.routers import (

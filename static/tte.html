@@ -191,8 +191,7 @@
       rmWS.on('tte_decision', () => loadTTERequests());
       rmWS.on('exchange_expired', () => loadTTERequests());
 
-      loadTTERequests();
-      loadTrainSummary();
+      Promise.allSettled([loadTTERequests(), loadTrainSummary()]);
     });
 
     function saveTTEKey() {

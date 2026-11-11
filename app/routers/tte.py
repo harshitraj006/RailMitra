@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.database import get_db
 from app.errors import ConflictException, NotFoundException
@@ -43,8 +43,8 @@ async def tte_list_requests(
     stmt = (
         select(ExchangeRequest)
         .options(
-            selectinload(ExchangeRequest.requester).selectinload(Passenger.group),
-            selectinload(ExchangeRequest.target).selectinload(Passenger.group),
+            joinedload(ExchangeRequest.requester).joinedload(Passenger.group),
+            joinedload(ExchangeRequest.target).joinedload(Passenger.group),
             selectinload(ExchangeRequest.confirmations),
         )
         .where(ExchangeRequest.status.in_(viewable_statuses))

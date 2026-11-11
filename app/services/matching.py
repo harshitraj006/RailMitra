@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import ExchangeRequest, MatchCategory, Passenger, RequestStatus, Train
 from app.schemas import JourneySegment, MatchCandidate, MatchListResponse
@@ -303,7 +303,7 @@ async def find_matches_for_passenger(
     # 1. Fetch requester with train and group
     requester = await db.scalar(
         select(Passenger)
-        .options(selectinload(Passenger.train), selectinload(Passenger.group))
+        .options(joinedload(Passenger.train), joinedload(Passenger.group))
         .where(Passenger.id == passenger_id)
     )
     if not requester:
@@ -330,17 +330,17 @@ async def find_matches_for_passenger(
     all_candidates = [to_match_passenger(c) for c in all_candidates_orm]
 
     # 4. Exclude passengers already in accepted or active exchanges
-    active_stmt = select(ExchangeRequest).where(
+    active_stmt = select(ExchangeRequest.requester_id, ExchangeRequest.target_id).where(
         ExchangeRequest.status.in_([
             RequestStatus.ACCEPTED_BY_PASSENGER.value,
             RequestStatus.TTE_APPROVED.value,
         ])
     )
-    active_requests = (await db.scalars(active_stmt)).all()
+    active_pairs = (await db.execute(active_stmt)).all()
     excluded_ids: Set[int] = set()
-    for req in active_requests:
-        excluded_ids.add(req.requester_id)
-        excluded_ids.add(req.target_id)
+    for req_id, tgt_id in active_pairs:
+        excluded_ids.add(req_id)
+        excluded_ids.add(tgt_id)
 
     # 5. Route stations
     route = requester.train.route_stations if requester.train else []
