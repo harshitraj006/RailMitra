@@ -1,27 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RailMitra – Smart Railway Seat Exchange & Family Seating</title>
-  <meta name="description" content="Consent-based smart railway seat exchange system for Indian Railways passengers and families.">
+  <meta name="description"
+    content="Consent-based smart railway seat exchange system for Indian Railways passengers and families.">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body>
 
-  <!-- Top Demo Banner -->
-  <aside class="demo-banner" id="demoBanner" role="region" aria-label="Demo Announcement">
-    <div>
-      <span data-i18n="demo_mode_banner">DEMO MODE: Simulated reservation data.</span>
-      <span id="demoOtpBanner" style="display:none; margin-left: 0.5rem;">
-        OTP: <span class="demo-otp-tag" id="demoOtpVal"></span>
-      </span>
-    </div>
-    <div style="display: flex; gap: 0.75rem; align-items: center;">
-      <a href="/static/demo.html" target="_blank" style="color: #fde68a;">Demo Tools 🛠️</a>
-      <a href="/static/tte.html" target="_blank" style="color: #fde68a;">TTE Portal 📋</a>
-    </div>
-  </aside>
+<body>
 
   <!-- Navigation Bar -->
   <header class="navbar" role="banner">
@@ -32,26 +21,37 @@
       </a>
 
       <div class="nav-actions">
+        <!-- Quick Portal Links -->
+        <a href="/static/tte.html" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">📋 TTE
+          Portal</a>
+        <a href="/static/demo.html" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">🛠️
+          Demo Tools</a>
+
         <!-- Language Switcher -->
-        <select id="langSelect" class="form-select" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; width: auto;" aria-label="Select Language">
+        <select id="langSelect" class="form-select" style="padding: 0.35rem 0.5rem; font-size: 0.8rem; width: auto;"
+          aria-label="Select Language">
           <option value="en">English</option>
           <option value="hi">हिंदी (Hindi)</option>
           <option value="kn">ಕನ್ನಡ (Kannada)</option>
         </select>
 
         <!-- Dark Mode Toggle -->
-        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
+        <button type="button" class="btn btn-outline btn-icon theme-toggle-btn" onclick="ui.toggleTheme()"
+          aria-label="Toggle Dark Mode">
           🌙
         </button>
 
         <!-- Notification Bell (visible when logged in) -->
-        <button type="button" id="notifBell" class="btn btn-outline btn-icon" style="display: none; position: relative;" onclick="openNotificationsModal()" aria-label="Notifications">
+        <button type="button" id="notifBell" class="btn btn-outline btn-icon" style="display: none; position: relative;"
+          onclick="openNotificationsModal()" aria-label="Notifications">
           🔔
-          <span id="notifBadge" class="badge badge-declined" style="position: absolute; top: -4px; right: -4px; padding: 2px 5px; font-size: 0.65rem; display: none;">0</span>
+          <span id="notifBadge" class="badge badge-declined"
+            style="position: absolute; top: -4px; right: -4px; padding: 2px 5px; font-size: 0.65rem; display: none;">0</span>
         </button>
 
         <!-- Sign Out Button -->
-        <button type="button" id="logoutBtn" class="btn btn-outline btn-sm" style="display: none;" onclick="handleLogout()" data-i18n="btn_logout">
+        <button type="button" id="logoutBtn" class="btn btn-outline btn-sm" style="display: none;"
+          onclick="handleLogout()" data-i18n="btn_logout">
           Sign Out
         </button>
       </div>
@@ -75,16 +75,22 @@
       </div>
 
       <!-- Quick Fill Buttons for Demo Judges -->
-      <div style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; border: 1px dashed var(--border);">
+      <div
+        style="background: var(--surface-raised); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; border: 1px dashed var(--border);">
         <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;">
           QUICK-FILL PRESETS (DEMO):
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000001', '12951')">Asha (S2-14)</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000003', '12951')">Kiran (S2-43)</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000004', '12951')">Ravi (S2-46)</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000005', '12951')">Vikram (S2-50)</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000010', '12951')">Verma Family</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000001', '12951')">Asha
+            (S2-14)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000003', '12951')">Kiran
+            (S2-43)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000004', '12951')">Ravi
+            (S2-46)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000005', '12951')">Vikram
+            (S2-50)</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="quickFill('PNR1000010', '12951')">Verma
+            Family</button>
         </div>
       </div>
 
@@ -104,7 +110,8 @@
             <input type="date" id="dateInput" class="form-input">
           </div>
         </div>
-        <div id="authError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;"></div>
+        <div id="authError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;">
+        </div>
         <button type="submit" id="validateBtn" class="btn btn-primary" style="width: 100%;" data-i18n="btn_validate">
           Validate Journey & Request OTP
         </button>
@@ -112,26 +119,37 @@
 
       <!-- Step 2: OTP Verification Form (Hidden until validated) -->
       <form id="otpForm" style="display: none;" onsubmit="handleVerifyOTP(event)">
-        <div style="background: var(--primary-light); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+        <div
+          style="background: var(--primary-light); padding: 0.85rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
           <div style="font-weight: 700; color: var(--primary); font-size: 0.9rem;" id="journeySummaryText"></div>
           <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" id="otpContactText"></div>
+          <div id="demoOtpBanner"
+            style="display: none; margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--primary);">
+            🔑 Simulated OTP: <span class="demo-otp-tag" id="demoOtpVal"
+              style="border-radius: 4px; padding: 2px 8px; background: #e0e7ff; color: #1e40af;"></span>
+          </div>
         </div>
 
         <div class="form-group">
           <label for="otpInput" class="form-label" data-i18n="otp_label">Verification Code (OTP)</label>
-          <input type="text" id="otpInput" class="form-input" required maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" style="font-size: 1.25rem; letter-spacing: 0.25em; text-align: center;">
+          <input type="text" id="otpInput" class="form-input" required maxlength="6" placeholder="6-digit code"
+            autocomplete="one-time-code" style="font-size: 1.25rem; letter-spacing: 0.25em; text-align: center;">
         </div>
 
-        <div id="lockoutTimerBox" style="display: none; background: var(--danger-bg); color: var(--danger); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; font-size: 0.85rem;">
+        <div id="lockoutTimerBox"
+          style="display: none; background: var(--danger-bg); color: var(--danger); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; font-size: 0.85rem;">
           <span data-i18n="lockout_warning">Account locked due to 3 failed attempts. Try again in:</span>
           <strong id="lockoutSeconds">600</strong> <span data-i18n="seconds">seconds</span>
         </div>
 
-        <div id="otpError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;"></div>
+        <div id="otpError" style="display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 0.75rem;">
+        </div>
 
         <div style="display: flex; gap: 0.5rem;">
-          <button type="button" class="btn btn-outline" style="flex: 1;" onclick="resetAuthForm()" data-i18n="btn_cancel">Back</button>
-          <button type="submit" id="verifyOtpBtn" class="btn btn-primary" style="flex: 2;" data-i18n="btn_verify">Verify & Enter</button>
+          <button type="button" class="btn btn-outline" style="flex: 1;" onclick="resetAuthForm()"
+            data-i18n="btn_cancel">Back</button>
+          <button type="submit" id="verifyOtpBtn" class="btn btn-primary" style="flex: 2;" data-i18n="btn_verify">Verify
+            & Enter</button>
         </div>
       </form>
     </section>
@@ -140,7 +158,7 @@
     <!-- SECTION 2: PASSENGER DASHBOARD (Visible when logged in)       -->
     <!-- ============================================================== -->
     <section id="dashboardView" style="display: none;">
-      
+
       <!-- Passenger & Journey Header Card -->
       <div class="card" style="border-top: 4px solid var(--primary);">
         <div class="card-header">
@@ -149,7 +167,8 @@
               <h2 id="userNameDisplay" style="font-size: 1.3rem; font-weight: 800;">Asha Sharma</h2>
               <span id="quotaBadge" class="badge badge-neutral">0 of 3 requests used</span>
             </div>
-            <div id="userPnrDisplay" style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;"></div>
+            <div id="userPnrDisplay" style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
+            </div>
           </div>
           <div style="text-align: right;">
             <div id="trainNameDisplay" style="font-weight: 700; color: var(--primary);">12951 - Demo Express</div>
@@ -159,7 +178,8 @@
 
         <!-- Route Visualization (S1 -> S5) -->
         <div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
+          <div
+            style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.25rem;">
             <span>Route Segment: <strong id="segmentText" style="color: var(--text-main);">S1 → S4</strong></span>
             <span>Train Status: <strong id="trainPosText" style="color: var(--accent);">At S1</strong></span>
           </div>
@@ -167,8 +187,10 @@
         </div>
 
         <!-- Co-passengers in family booking -->
-        <div id="groupMembersBox" style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
-          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;" data-i18n="group_members_title">
+        <div id="groupMembersBox"
+          style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.4rem;"
+            data-i18n="group_members_title">
             Co-Travelers in your Booking:
           </div>
           <div id="groupMembersList" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
@@ -177,13 +199,17 @@
 
       <!-- Navigation Tabs -->
       <div style="display: flex; gap: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; padding-bottom: 0.25rem;">
-        <button type="button" class="btn btn-primary tab-btn" id="tabFindMatches" onclick="switchTab('matches')" data-i18n="tab_find_matches">Find Seat Exchange</button>
-        <button type="button" class="btn btn-outline tab-btn" id="tabMyRequests" onclick="switchTab('my-requests')" data-i18n="tab_my_requests">My Requests</button>
+        <button type="button" class="btn btn-primary tab-btn" id="tabFindMatches" onclick="switchTab('matches')"
+          data-i18n="tab_find_matches">Find Seat Exchange</button>
+        <button type="button" class="btn btn-outline tab-btn" id="tabMyRequests" onclick="switchTab('my-requests')"
+          data-i18n="tab_my_requests">My Requests</button>
         <button type="button" class="btn btn-outline tab-btn" id="tabIncoming" onclick="switchTab('incoming')">
           <span data-i18n="tab_incoming">Incoming Requests</span>
-          <span id="incomingBadge" class="badge badge-declined" style="display:none; padding: 2px 6px; font-size: 0.65rem;">0</span>
+          <span id="incomingBadge" class="badge badge-declined"
+            style="display:none; padding: 2px 6px; font-size: 0.65rem;">0</span>
         </button>
-        <button type="button" class="btn btn-outline tab-btn" id="tabGroup" onclick="switchTab('group')" data-i18n="tab_group_request" style="display:none;">Family Group</button>
+        <button type="button" class="btn btn-outline tab-btn" id="tabGroup" onclick="switchTab('group')"
+          data-i18n="tab_group_request" style="display:none;">Family Group</button>
       </div>
 
       <!-- TAB A: MATCH CANDIDATES -->
@@ -191,7 +217,8 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
           <div>
             <h3 style="font-size: 1.1rem; font-weight: 700;" data-i18n="match_title">Eligible Exchange Candidates</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="match_subtitle">Ranked co-passengers with overlapping journey segments</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" data-i18n="match_subtitle">Ranked co-passengers with
+              overlapping journey segments</p>
           </div>
           <button type="button" class="btn btn-outline btn-sm" onclick="loadMatches()">Refresh</button>
         </div>
@@ -233,19 +260,24 @@
   </main>
 
   <!-- Confirm Request Modal -->
-  <div id="confirmRequestModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+  <div id="confirmRequestModal" class="modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="confirmModalTitle">
     <div class="modal-box">
       <div class="modal-header">
         <h3 id="confirmModalTitle" class="card-title" data-i18n="confirm_modal_title">Confirm Exchange Request</h3>
-        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('confirmRequestModal')">&times;</button>
+        <button type="button" class="btn btn-outline btn-sm btn-icon"
+          onclick="ui.closeModal('confirmRequestModal')">&times;</button>
       </div>
       <div id="confirmModalBody" style="font-size: 0.9rem; margin-bottom: 1rem;"></div>
       <div class="disclaimer-box" style="margin-bottom: 1rem;">
-        ⚠️ <span data-i18n="expiry_notice">Reminders support compliance but cannot physically enforce returning to original berths.</span>
+        ⚠️ <span data-i18n="expiry_notice">Reminders support compliance but cannot physically enforce returning to
+          original berths.</span>
       </div>
       <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-        <button type="button" class="btn btn-outline" onclick="ui.closeModal('confirmRequestModal')" data-i18n="btn_cancel">Cancel</button>
-        <button type="button" id="sendRequestConfirmBtn" class="btn btn-primary" data-i18n="btn_confirm">Send Request</button>
+        <button type="button" class="btn btn-outline" onclick="ui.closeModal('confirmRequestModal')"
+          data-i18n="btn_cancel">Cancel</button>
+        <button type="button" id="sendRequestConfirmBtn" class="btn btn-primary" data-i18n="btn_confirm">Send
+          Request</button>
       </div>
     </div>
   </div>
@@ -255,12 +287,15 @@
     <div class="modal-box">
       <div class="modal-header">
         <h3 class="card-title">🔔 Notifications</h3>
-        <button type="button" class="btn btn-outline btn-sm btn-icon" onclick="ui.closeModal('notificationsModal')">&times;</button>
+        <button type="button" class="btn btn-outline btn-sm btn-icon"
+          onclick="ui.closeModal('notificationsModal')">&times;</button>
       </div>
       <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="markAllNotificationsAsRead()">Mark all as
+          read</button>
       </div>
-      <div id="notificationsList" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 350px; overflow-y: auto;"></div>
+      <div id="notificationsList"
+        style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 350px; overflow-y: auto;"></div>
     </div>
   </div>
 
@@ -269,7 +304,8 @@
     <div class="container" style="padding: 0;">
       <div>&copy; 2026 RailMitra – Smart Railway Seat Exchange & Family Seating System</div>
       <div class="disclaimer-box" data-i18n="footer_disclaimer">
-        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database. Official use would require authorization from Indian Railways.
+        Prototype using a simulated reservation dataset. Not the official Indian Railways reservation chart or database.
+        Official use would require authorization from Indian Railways.
       </div>
     </div>
   </footer>
@@ -307,7 +343,7 @@
         if (cached) {
           try {
             onLoginSuccess(JSON.parse(cached), true);
-          } catch (e) {}
+          } catch (e) { }
         }
         try {
           const profile = await api.getMe();
@@ -387,19 +423,23 @@
 
         // Send OTP
         const otpRes = await api.sendOTP(pnr);
-        
-        // Show demo banner with OTP
+
+        // Show demo banner with OTP and auto-fill OTP field
         if (otpRes.demo_otp) {
-          document.getElementById('demoOtpVal').textContent = otpRes.demo_otp;
-          document.getElementById('demoOtpBanner').style.display = 'inline-block';
+          const otpValEl = document.getElementById('demoOtpVal');
+          if (otpValEl) otpValEl.textContent = otpRes.demo_otp;
+          const otpBannerEl = document.getElementById('demoOtpBanner');
+          if (otpBannerEl) otpBannerEl.style.display = 'block';
+          const otpInputEl = document.getElementById('otpInput');
+          if (otpInputEl) otpInputEl.value = otpRes.demo_otp;
         }
 
         // Switch to OTP form
         document.getElementById('journeyForm').style.display = 'none';
         document.getElementById('otpForm').style.display = 'block';
-        document.getElementById('journeySummaryText').textContent = 
+        document.getElementById('journeySummaryText').textContent =
           `${valRes.passenger_name} • Coach ${valRes.coach}, Berth ${valRes.berth_no} (${valRes.berth_type})`;
-        document.getElementById('otpContactText').textContent = 
+        document.getElementById('otpContactText').textContent =
           `OTP dispatched to simulated mobile ${valRes.phone_masked}`;
 
         ui.showToast('Simulated OTP sent successfully!', 'info');
@@ -506,7 +546,8 @@
     async function handleLogout() {
       await api.logout();
       currentPassenger = null;
-      document.getElementById('demoOtpBanner').style.display = 'none';
+      const otpBannerEl = document.getElementById('demoOtpBanner');
+      if (otpBannerEl) otpBannerEl.style.display = 'none';
       resetAuthForm();
       showAuthView();
       ui.showToast('Logged out successfully.', 'info');
@@ -948,4 +989,5 @@
     }
   </script>
 </body>
+
 </html>
